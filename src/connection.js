@@ -11,6 +11,9 @@ import { thisUser } from './obj-oriented-client.js';
  */
 let connection = null;
 
+/**
+ * Guardian class for the connection; controls what requests/messages are sent to the server
+ */
 export default class Connection
 {
     /**

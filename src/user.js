@@ -26,9 +26,21 @@ export default class User
      * @param {string} name the username of the user
      * @param {number} id the UUID of the user
      */
-    constructor(name, id)
+    static DummyUser(name, id)
     {
-        this.username = name;
-        this.id = id;
+        const newUser = new User(name);
+        newUser.id = id;
+        return newUser;
+    }
+
+    /**
+     * Checks the credentials against this user
+     * @param {UserCredentials} creds 
+     * @returns true if and only if the credentials match
+     * @type {boolean}
+     */
+    check(creds)
+    {
+        return creds.username === this.username && creds.id === this.id;
     }
 }

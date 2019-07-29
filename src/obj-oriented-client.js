@@ -12,7 +12,7 @@ export let thisUser;
 function wipe()
 {
     const username = document.getElementById('input').value;
-    thisUser = await Connection.register(username);
+    Connection.register(username).then((user) => thisUser = user);
 
     document.body.removeChild(document.getElementById('text'));
     document.body.removeChild(document.getElementById('input'));
@@ -63,7 +63,7 @@ window.addEventListener('load', () => {
 });
 
 window.addEventListener('contextmenu', (evt) => {
-    if (evt.target.className === 'message')
+    if (evt.target.classList.contains('message'))
     {
         evt.preventDefault();
     }

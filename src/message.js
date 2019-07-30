@@ -55,11 +55,11 @@ export default class Message
         {
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : ++Number(document.title.match(/\d*/)[0])}🔴 🅱iscord`;
+                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : ++Number(document.title.match(/\d*/)[0])}\u1F534 \u1F171iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {
-                        document.title = '🅱iscord';
+                        document.title = '\u1F171iscord';
                         window.scrollBy({
                             top: window.outerHeight
                         });
@@ -136,11 +136,11 @@ export default class Message
             newMsg.msg.style = 'bgcolor:rgb(206, 184, 87)';
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : ++Number(document.title.match(/\d*/)[0])}🔴 🅱iscord`;
+                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : ++Number(document.title.match(/\d*/)[0])}\u1F534 \u1F171iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {
-                        document.title = '🅱iscord';
+                        document.title = '\u1F171iscord';
                         window.scrollBy({
                             top: window.outerHeight
                         });

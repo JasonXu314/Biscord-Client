@@ -1,5 +1,6 @@
 const path = require('path');
 module.exports = {
+  mode: 'production',
   entry: './src/obj-oriented-client.js',
   output: {
     filename: 'client.js',

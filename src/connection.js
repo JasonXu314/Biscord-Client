@@ -99,16 +99,12 @@ export default class Connection
                         switch (JSON.parse(msg.data).type)
                         {
                             case ('message'):
-                                console.log(msg.data);
-                                // const msgObj = JSON.parse(JSON.parse(msg.data).message);
-                                const msgObj = JSON.parse(msg.data).message;
-                                console.log(msgObj);
-                                if (JSON.parse(msbObj.author).id !== thisUser.id)
+                                if (JSON.parse(msg.data).author.id !== thisUser.id)
                                 {
-                                    let message = Message.CreateMessage(msgObj.messageRaw, {
-                                        username: JSON.parse(msgObj.author).username,
-                                        id: JSON.parse(msgObj.author).id
-                                    }, msgObj.id, msgObj.edits);
+                                    let message = Message.CreateMessage(JSON.parse(msg.data).message.messageRaw, {
+                                        username: JSON.parse(msg.data).author.username,
+                                        id: JSON.parse(msg.data).author.id
+                                    }, JSON.parse(msg.data).message.id, JSON.parse(msg.data).message.edits);
                                     document.getElementById('messageBoard').appendChild(message.render());
                                 }
                                 break;

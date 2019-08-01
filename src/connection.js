@@ -1,4 +1,4 @@
-import { windowBehavior, addUser } from './utilities.js';
+import { windowBehavior, addUser, addMessage } from './utilities.js';
 import User from './user.js';
 import Message from './message.js';
 import { thisUser, wipe, setUser } from './obj-oriented-client.js';
@@ -106,7 +106,11 @@ export default class Connection
                                             id: JSON.parse(msg.data).message.author.id
                                         }, JSON.parse(msg.data).message.id, JSON.parse(msg.data).message.edits);
                                         document.getElementById('messageBoard').insertBefore(message.render(), document.getElementById('inputRow'));
+                                        addMessage(message);
                                     }
+                                    break;
+                                case ('join'):
+                                    addUser(JSON.parse(msg.data).user);
                                     break;
                             }
                         });

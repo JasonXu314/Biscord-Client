@@ -7,6 +7,8 @@ import $ from 'jquery';
  */
 const userMap = new Map();
 
+const messageCache = new Map();
+
 /**
  * Adds a user to this client's internal record of users
  * @param {User} user the user to be added to the map
@@ -20,9 +22,38 @@ export function addUser(user)
  * Gets a user from the client's internal record of users by id
  * @param {string} id the UUID of the user to be retrieved
  */
-export function retrieveUser(id)
+export function retrieveUserByID(id)
 {
     return userMap.get(id);
+}
+
+export function retrieveUserByName(name)
+{
+    for (let user of userMap.values())
+    {
+        if (user.username === name)
+        {
+            return user;
+        }
+    }
+}
+
+/**
+ * Adds a message to this client's internal cache of messages
+ * @param {Message} message the message to add to the internal cache
+ */
+export function addMessage(message)
+{
+    messageCache.set(message.id, message);
+}
+
+/**
+ * Gets a message from the client's internal cache of messages by id
+ * @param {string} id the UUID of the message to be retrieved
+ */
+export function retrieveMessage(id)
+{
+    return messageCache.get(id);
 }
 
 export const windowBehavior = (evt) => {

@@ -1,4 +1,4 @@
-import { windowBehavior } from './utilities.js';
+import { windowBehavior, addMessage } from './utilities.js';
 import Connection from './connection.js';
 import User from './user.js';
 import Message from './message.js';
@@ -75,6 +75,7 @@ export function wipe()
             input.value = '';
             input.focus();
             Connection.message(message);
+            addMessage(message);
         });
     });
 }

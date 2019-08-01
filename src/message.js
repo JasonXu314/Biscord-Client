@@ -241,7 +241,6 @@ export default class Message
                     this.messageDisplay = this.messageRaw.replace(/<@(?:\d){13}>/, (substring) => retrieveUser(substring.slice(2, -1)));
                     this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
                     this.refreshMentions();
-                    this.element.replaceChild(editor, this.msg);
                     // if (document.getElementById(`${this.id}sub`) !== null)
                     // {
                     //     this.element.appendChild(this.element.removeChild(document.getElementById(`${this.id}sub`)));
@@ -307,7 +306,7 @@ export default class Message
                 }
             };
             document.addEventListener('keydown', escBehavior);
-            this.element.appendChild(editor);
+            this.element.replaceChild(editor, this.msg);
             editor.focus();
         }
         else

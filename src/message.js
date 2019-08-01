@@ -43,7 +43,7 @@ export default class Message
          * @type {Array<string>}
          * @readonly
          */
-        this.mentions = messageRaw.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...messageRaw.match(/<@(?:\d){13}>/g));
+        this.mentions = this.messageRaw.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...this.messageRaw.match(/<@(?:\d){13}>/g));
 
         /**
          * A list of messages this message conveyed in the past

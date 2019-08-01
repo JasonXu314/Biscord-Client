@@ -43,7 +43,7 @@ export default class Message
          * @type {Array<string>}
          * @readonly
          */
-        this.mentions = new Array(...message.match(/<@(?:\d){13}>/));
+        this.mentions = message.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...message.match(/<@(?:\d){13}>/g));
 
         /**
          * A list of messages this message conveyed in the past
@@ -55,6 +55,7 @@ export default class Message
 
         this.element = document.createElement('tr');
         this.msg = document.createElement('td');
+        this.element.appendChild(this.msg);
         this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
         this.element.id = this.id;
         this.msg.classList.add('message');
@@ -75,46 +76,20 @@ export default class Message
                 }, { once: true });
             }
         }
-        this.msg.addEventListener('auxclick', this.delete({ username: thisUser.username, id: thisUser.id }));
-        msg.addEventListener('click', (evt) => {
+        this.msg.addEventListener('auxclick', (evt) => {
             if (evt.target === this.msg)
             {
-                this.element.removeChild(this.msg);
-                let editor = document.createElement('input');
-                editor.id = 'editor';
-                const behavior = (evt) => {
-                    if (evt.code === 'Enter')
-                    {
-                        this.edit(editor.value, {
-                            username: thisUser.username,
-                            id: thisUser.id
-                        });
-                    }
-                };
-                const escBehavior = (evt) => {
-                    if (evt.code === 'Escape' && evt.target === editor)
-                    {
-                        if (document.getElementById(`${this.id}sub`) !== null)
-                        {
-                            let sub = this.element.removeChild(document.getElementById(`${this.id}sub`));
-                            this.element.appendChild(msg);
-                            this.element.appendChild(sub);
-                            this.element.removeChild(editor);
-                            document.removeEventListener('keydown', behavior);
-                            document.removeEventListener('keydown', escBehavior);
-                        }
-                        else
-                        {
-                            this.element.removeChild(editor);
-                            this.element.appendChild(msg);
-                            document.removeEventListener('keydown', behavior);
-                            document.removeEventListener('keydown', escBehavior);
-                        }
-                    }
-                };
-                document.addEventListener('keydown', escBehavior);
-                this.element.appendChild(editor);
-                editor.focus();
+                window.addEventListener('contextmenu', (evt) => evt.preventDefault(), { once: true });
+                this.delete({ username: thisUser.username, id: thisUser.id });
+            }
+        });
+        this.msg.addEventListener('click', (evt) => {
+            if (evt.target === this.msg)
+            {
+                this.edit({
+                    username: thisUser.username,
+                    id: thisUser.id
+                });
             }
         });
     }
@@ -124,23 +99,23 @@ export default class Message
      * @param {string} message the text contained in the message
      * @param {UserShell} sender the user sending the message
      * @param {number} id the UUID of the message
-     * @param {string[]} mentions the users mentioned by the message
      * @param {string[]} edits the edit history of the message
      */
-    static CreateMessage(message, sender, id, mentions, edits)
+    static CreateMessage(message, sender, id, edits)
     {
-        const newMsg = new Message(message, User.DummyUser(sender.name, sender.id))
+        const newMsg = new Message(message, User.DummyUser(sender.username, sender.id))
         newMsg.id = id;
         newMsg.edits = edits;
 
         newMsg.element = document.createElement('tr');
         newMsg.msg = document.createElement('td');
+        newMsg.element.appendChild(newMsg.msg);
         newMsg.msg.textContent = `${newMsg.author.username}: ${newMsg.messageDisplay}`;
         newMsg.element.id = id;
         newMsg.msg.classList.add('message');
         if (newMsg.mentions.includes(`<@${thisUser.id}>`))
         {
-            newMsg.classList.add('mention');
+            newMsg.msg.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
                 document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}\u1F534 \u1F171iscord`;
@@ -159,7 +134,7 @@ export default class Message
         {
             const sub = document.createElement('sub');
             sub.textContent = `edited (${edits.length})`;
-            sub.id = `${id}sub`;
+            sub.id = `${this.id}sub`;
             sub.addEventListener('mouseover', (evt) => {
                 let display = document.createElement('div');
                 display.id = 'editDiv';
@@ -184,46 +159,20 @@ export default class Message
                 document.removeEventListener('mousemove', innerBehavior)
             });
         }
-        newMsg.msg.addEventListener('auxclick', newMsg.delete({ username: thisUser.username, id: thisUser.id}));
-        msg.addEventListener('click', (evt) => {
+        newMsg.msg.addEventListener('auxclick', (evt) => {
             if (evt.target === newMsg.msg)
             {
-                newMsg.element.removeChild(newMsg.msg);
-                let editor = document.createElement('input');
-                editor.id = 'editor';
-                const behavior = (evt) => {
-                    if (evt.code === 'Enter')
-                    {
-                        newMsg.edit(editor.value, {
-                            username: thisUser.username,
-                            id: thisUser.id
-                        });
-                    }
-                };
-                const escBehavior = (evt) => {
-                    if (evt.code === 'Escape' && evt.target === editor)
-                    {
-                        if (document.getElementById(`${id}sub`) !== null)
-                        {
-                            let sub = newMsg.element.removeChild(document.getElementById(`${id}sub`));
-                            newMsg.element.appendChild(msg);
-                            newMsg.element.appendChild(sub);
-                            newMsg.element.removeChild(editor);
-                            document.removeEventListener('keydown', behavior);
-                            document.removeEventListener('keydown', escBehavior);
-                        }
-                        else
-                        {
-                            newMsg.element.removeChild(editor);
-                            newMsg.element.appendChild(msg);
-                            document.removeEventListener('keydown', behavior);
-                            document.removeEventListener('keydown', escBehavior);
-                        }
-                    }
-                };
-                document.addEventListener('keydown', escBehavior);
-                newMsg.element.appendChild(editor);
-                editor.focus();
+                window.addEventListener('contextmenu', (evt) => evt.preventDefault(), { once: true });
+                newMsg.delete({ username: thisUser.username, id: thisUser.id });
+            }
+        });
+        newMsg.msg.addEventListener('click', (evt) => {
+            if (evt.target === newMsg.msg)
+            {
+                newMsg.edit({
+                    username: thisUser.username,
+                    id: thisUser.id
+                });
             }
         });
         
@@ -251,7 +200,7 @@ export default class Message
                 id: this.author.id,
                 msgID: this.id
             });
-            document.removeChild(this.element);
+            document.getElementById('messageBoard').removeChild(this.element);
         }
         else
         {
@@ -260,60 +209,110 @@ export default class Message
     }
 
     /**
-     * Edits this message to say
-     * @param {string} newMsg
+     * Tries to edit this message
      * @param {UserCredentials} creds
      */
-    edit(newMsg, creds)
+    edit(creds)
     {
         if (this.author.check(creds))
         {
-            Connection.request('edit', {
-                id: this.author.id,
-                msgID: this.id,
-                newMsg: newMsg,
-                oldMsg: this.messageRaw
-            });
-            
-            this.messageRaw = newMsg;
-            this.messageDisplay = message.replace(/<@(?:\d){13}>/, (substring) => retrieveUser(substring.slice(2, -1)));
-            this.msg.textContent = this.messageDisplay;
+            let editor = document.createElement('input');
+            editor.id = 'editor';
+            editor.autocomplete = 'off';
+            const behavior = (evt) => {
+                if (evt.code === 'Enter' && evt.target === editor)
+                {
+                    const newMsg = editor.value.trim();
+                    
+                    if (newMsg === undefined) return;
 
-            if (this.edits.length === 0)
-            {
-                const sub = document.createElement('sub');
-                sub.textContent = `edited (${this.edits.length})`;
-                sub.id = `${this.id}sub`;
-                sub.addEventListener('mouseover', (evt) => {
-                    let display = document.createElement('div');
-                    display.id = 'editDiv';
-                    let editBoard = document.createElement('table');
-                    display.appendChild(editBoard);
-                    display.setAttribute('style', `top:${evt.pageY - 45}px;left:${evt.pageX - 45}px;position:absolute;`);
-                    editBoard.setAttribute('class', 'messageBoard');
-                    edits.forEach((editMsg) => {
-                        let editTr = document.createElement('tr');
-                        let editTd = document.createElement('td');
-                        editTd.textContent = editMsg;
-                        editTd.setAttribute('class', 'message');
-                        editTr.appendChild(editTd);
-                        editBoard.appendChild(editTr);
+                    Connection.request('edit', {
+                        id: this.id,
+                        newMsg: newMsg,
+                        oldMsg: this.messageRaw,
+                        creds: {
+                            username: this.author.username,
+                            id: this.author.id
+                        }
                     });
-                    display.appendChild(editBoard);
-                    document.body.appendChild(display);
-                    document.addEventListener('mousemove', innerBehavior);
-                });
-                sub.addEventListener('mouseout', () => {
-                    document.body.removeChild(document.getElementById('editDiv'));
-                    document.removeEventListener('mousemove', innerBehavior)
-                });
-            }
-            this.edits.push(this.messageDisplay);
-            this.refreshMentions();
+                    
+                    this.edits.push(this.messageRaw);
+                    this.messageRaw = newMsg;
+                    this.messageDisplay = this.messageRaw.replace(/<@(?:\d){13}>/, (substring) => retrieveUser(substring.slice(2, -1)));
+                    this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
+                    this.refreshMentions();
+                    this.element.replaceChild(this.msg, editor);
+                    // if (document.getElementById(`${this.id}sub`) !== null)
+                    // {
+                    //     this.element.appendChild(this.element.removeChild(document.getElementById(`${this.id}sub`)));
+                    // }
+        
+                    if (this.edits.length === 1)
+                    {
+                        const sub = document.createElement('sub');
+                        sub.textContent = 'edited (1)';
+                        sub.id = `${this.id}sub`;
+                        sub.addEventListener('mouseover', (evt) => {
+                            let display = document.createElement('div');
+                            display.id = 'editDiv';
+                            let editBoard = document.createElement('table');
+                            display.appendChild(editBoard);
+                            display.setAttribute('style', `top:${evt.pageY - 45}px;left:${evt.pageX - 45}px;position:absolute;`);
+                            editBoard.setAttribute('class', 'messageBoard');
+                            this.edits.forEach((editMsg) => {
+                                let editTr = document.createElement('tr');
+                                let editTd = document.createElement('td');
+                                editTd.textContent = editMsg;
+                                editTd.setAttribute('class', 'message');
+                                editTr.appendChild(editTd);
+                                editBoard.appendChild(editTr);
+                            });
+                            display.appendChild(editBoard);
+                            document.body.appendChild(display);
+                            document.addEventListener('mousemove', innerBehavior);
+                        });
+                        sub.addEventListener('mouseout', () => {
+                            document.body.removeChild(document.getElementById('editDiv'));
+                            document.removeEventListener('mousemove', innerBehavior)
+                        });
+                        this.element.appendChild(sub);
+                    }
+                    else
+                    {
+                        document.getElementById(`${this.id}sub`).textContent = `edited (${this.edits.length})`;
+                        this.element.appendChild(this.element.removeChild(document.getElementById(`${this.id}sub`)));
+                    }
+                }
+            };
+            editor.addEventListener('keydown', behavior);
+            const escBehavior = (evt) => {
+                if (evt.code === 'Escape' && evt.target === editor)
+                {
+                    if (document.getElementById(`${this.id}sub`) !== null)
+                    {
+                        let sub = this.element.removeChild(document.getElementById(`${this.id}sub`));
+                        this.element.appendChild(this.msg);
+                        this.element.appendChild(sub);
+                        this.element.removeChild(editor);
+                        document.removeEventListener('keydown', behavior);
+                        document.removeEventListener('keydown', escBehavior);
+                    }
+                    else
+                    {
+                        this.element.removeChild(editor);
+                        this.element.appendChild(this.msg);
+                        document.removeEventListener('keydown', behavior);
+                        document.removeEventListener('keydown', escBehavior);
+                    }
+                }
+            };
+            document.addEventListener('keydown', escBehavior);
+            this.element.appendChild(editor);
+            editor.focus();
         }
         else
         {
-            alert("Please do not try to delete other peoples' messages!");
+            alert("Please do not try to edit other peoples' messages!");
         }
     }
 
@@ -322,7 +321,7 @@ export default class Message
      */
     refreshMentions()
     {
-        this.mentions = new Array(...message.match(/<@(?:\d){13}>/));
+        this.mentions = this.messageRaw.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...this.messageRaw.match(/<@(?:\d){13}>/g));
         if (this.mentions.includes(`<@${thisUser.id}>`))
         {
             this.element.classList.add('mention');

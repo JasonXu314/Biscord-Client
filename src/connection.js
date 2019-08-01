@@ -110,7 +110,10 @@ export default class Connection
                                     }
                                     break;
                                 case ('join'):
-                                    addUser(JSON.parse(msg.data).user);
+                                        if (JSON.parse(msg.data).user.id !== thisUser.id)
+                                        {
+                                            addUser(User.DummyUser(JSON.parse(msg.data).username, JSON.parse(msg.data).id));
+                                        }
                                     break;
                             }
                         });

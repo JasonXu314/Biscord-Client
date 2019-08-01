@@ -62,3 +62,16 @@ interface EditRequest extends MyRequest
      */
     oldMsg: string;
 }
+
+interface UserShell
+{
+    /**
+     * Username of the user
+     */
+    username: string;
+
+    /**
+     * UUID of the user
+     */
+    id: number;
+}

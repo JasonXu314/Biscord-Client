@@ -81,7 +81,7 @@ function wipe()
                 connection.send(JSON.stringify({
                     type: 'delete',
                     user: username,
-                    id: JSON.parse(msg.data).id
+                    id: tr.id
                 }));
             });
             messageBox.addEventListener('click', (evt) => {

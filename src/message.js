@@ -1,7 +1,7 @@
 import Connection from './connection.js';
 import User from './user.js';
 import { thisUser } from './obj-oriented-client.js';
-import { innerBehavior } from './utilities.js';
+import { innerBehavior, retrieveUser } from './utilities.js';
 
 export default class Message
 {
@@ -16,7 +16,14 @@ export default class Message
          * The message conveyed by this Message
          * @type {string}
          */
-        this.message = message;
+        this.messageRaw = message;
+
+        /**
+         * The message conveyed by this Message when rendered on-screen
+         * Converts all mentions to the username of the respective User
+         * @type {string}
+         */
+        this.messageDisplay = message.replace(/<@(?:\d){13}>/, (substring) => retrieveUser(substring.slice(2, -1)));
 
         /**
          * The sender of this Message
@@ -44,18 +51,19 @@ export default class Message
          * @type {Array<string>}
          * @readonly
          */
-        this.edits = new [];
+        this.edits = [];
 
         this.element = document.createElement('tr');
         this.msg = document.createElement('td');
-        this.msg.textContent = `${this.author.username}: ${this.message}`;
-        this.msg.id = this.id;
+        this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
+        this.element.id = this.id;
         this.msg.classList.add('message');
         if (this.mentions.includes(`<@${thisUser.id}>`))
         {
+            this.msg.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : ++Number(document.title.match(/\d*/)[0])}\u1F534 \u1F171iscord`;
+                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}\u1F534 \u1F171iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {
@@ -67,7 +75,7 @@ export default class Message
                 }, { once: true });
             }
         }
-        this.msg.addEventListener('auxclick', this.delete());
+        this.msg.addEventListener('auxclick', this.delete({ username: thisUser.username, id: thisUser.id }));
         msg.addEventListener('click', (evt) => {
             if (evt.target === this.msg)
             {
@@ -123,20 +131,19 @@ export default class Message
     {
         const newMsg = new Message(message, User.DummyUser(sender.name, sender.id))
         newMsg.id = id;
-        newMsg.mentions = mentions;
         newMsg.edits = edits;
 
         newMsg.element = document.createElement('tr');
         newMsg.msg = document.createElement('td');
-        newMsg.msg.textContent = `${newMsg.author.username}: ${newMsg.message}`;
-        newMsg.msg.id = newMsg.id;
+        newMsg.msg.textContent = `${newMsg.author.username}: ${newMsg.messageDisplay}`;
+        newMsg.element.id = id;
         newMsg.msg.classList.add('message');
         if (newMsg.mentions.includes(`<@${thisUser.id}>`))
         {
-            newMsg.msg.style = 'bgcolor:rgb(206, 184, 87)';
+            newMsg.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : ++Number(document.title.match(/\d*/)[0])}\u1F534 \u1F171iscord`;
+                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}\u1F534 \u1F171iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {
@@ -177,7 +184,7 @@ export default class Message
                 document.removeEventListener('mousemove', innerBehavior)
             });
         }
-        newMsg.msg.addEventListener('auxclick', newMsg.delete());
+        newMsg.msg.addEventListener('auxclick', newMsg.delete({ username: thisUser.username, id: thisUser.id}));
         msg.addEventListener('click', (evt) => {
             if (evt.target === newMsg.msg)
             {
@@ -265,9 +272,13 @@ export default class Message
                 id: this.author.id,
                 msgID: this.id,
                 newMsg: newMsg,
-                oldMsg: this.message
+                oldMsg: this.messageRaw
             });
-            this.msg.textContent = newMsg;
+            
+            this.messageRaw = newMsg;
+            this.messageDisplay = message.replace(/<@(?:\d){13}>/, (substring) => retrieveUser(substring.slice(2, -1)));
+            this.msg.textContent = this.messageDisplay;
+
             if (this.edits.length === 0)
             {
                 const sub = document.createElement('sub');
@@ -297,8 +308,7 @@ export default class Message
                     document.removeEventListener('mousemove', innerBehavior)
                 });
             }
-            this.edits.push(this.message);
-            this.message = newMsg;
+            this.edits.push(this.messageDisplay);
             this.refreshMentions();
         }
         else
@@ -318,7 +328,7 @@ export default class Message
             this.element.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : ++Number(document.title.match(/\d*/)[0])}🔴 🅱iscord`;
+                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}🔴 🅱iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {

@@ -2,6 +2,7 @@ import { windowBehavior } from './utilities.js';
 import Connection from './connection.js';
 import User from './user.js';
 import Message from './message.js';
+import $ from 'jquery';
 
 /**
  * The user using this client
@@ -9,10 +10,18 @@ import Message from './message.js';
  */
 export let thisUser;
 
-function wipe()
+export function wipe()
 {
+    $('#join').off();
+    $('#input').off();
+
     const username = document.getElementById('input').value;
-    Connection.register(username).then((user) => thisUser = user);
+    thisUser = Connection.register(username);
+    console.log(thisUser);
+    if (thisUser === undefined)
+    {
+        return;
+    }
 
     document.body.removeChild(document.getElementById('text'));
     document.body.removeChild(document.getElementById('input'));
@@ -56,7 +65,7 @@ function wipe()
 }
 
 window.addEventListener('load', () => {
-    document.getElementById('join').addEventListener('click', wipe());
+    document.getElementById('join').addEventListener('click', () => wipe());
     document.getElementById('input').focus();
 
     document.addEventListener('keydown', windowBehavior);

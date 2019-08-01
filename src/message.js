@@ -16,7 +16,7 @@ export default class Message
          * The message conveyed by this Message
          * @type {string}
          */
-        this.messageRaw = message.replace(/@[a-zA-Z0-9_-]+/g, (substring) => `<@${retrieveUserByName(substring.slice(1)).id}>`);
+        this.messageRaw = message.replace(/@[a-zA-Z0-9_-]+/g, (substring) => retrieveUserByName(substring.slice(1)) === undefined ? substring : `<@${retrieveUserByName(substring.slice(1)).id}>`);
 
         /**
          * The message conveyed by this Message when rendered on-screen

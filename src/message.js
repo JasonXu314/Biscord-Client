@@ -111,9 +111,9 @@ export default class Message
         newMsg.element.id = id;
         newMsg.msg.classList.add('message');
 
-        if (this.mentions.includes(`<@${thisUser.id}>`))
+        if (newMsg.mentions.includes(`<@${thisUser.id}>`))
         {
-            this.msg.classList.add('mention');
+            newMsg.msg.classList.add('mention');
         }
 
         if (edits.length !== 0)

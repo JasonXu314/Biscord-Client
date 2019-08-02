@@ -108,8 +108,10 @@ export default class Connection
                                     }
                                     break;
                                 case ('delete'):
+                                    console.log('hi');
                                     if (!thisUser.check(JSON.parse(msg.data).creds))
                                     {
+                                        console.log('inside');
                                         retrieveMessage(parseInt(JSON.parse(msg.data).id)).delete(JSON.parse(msg.data).creds, true);
                                         removeMessage(parseInt(JSON.parse(msg.data).id));
                                     }

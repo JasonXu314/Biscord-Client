@@ -203,8 +203,8 @@ export default class Message
                         });
                         
                         this.edits.push(this.messageDisplay);
-                        this.messageRaw = newMsg;
-                        this.messageDisplay = this.messageRaw.replace(/<@(?:\d){13}>/, (substring) => retrieveUserByID(substring.slice(2, -1)));
+                        this.messageRaw = newMsgRaw;
+                        this.messageDisplay = newMsgDisplay;
                         this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
                         this.refreshMentions();
                         this.element.replaceChild(this.msg, editor);

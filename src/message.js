@@ -104,17 +104,17 @@ export default class Message
         newMsg.id = id;
         newMsg.edits = edits;
 
-        newMsg.element = document.createElement('tr');
-        newMsg.msg = document.createElement('td');
-        newMsg.element.appendChild(newMsg.msg);
-        newMsg.msg.textContent = `${newMsg.author.username}: ${newMsg.messageDisplay}`;
+        // newMsg.element = document.createElement('tr');
+        // newMsg.msg = document.createElement('td');
+        // newMsg.element.appendChild(newMsg.msg);
+        // newMsg.msg.textContent = `${newMsg.author.username}: ${newMsg.messageDisplay}`;
         newMsg.element.id = id;
-        newMsg.msg.classList.add('message');
+        // newMsg.msg.classList.add('message');
 
-        if (newMsg.mentions.includes(`<@${thisUser.id}>`))
-        {
-            newMsg.msg.classList.add('mention');
-        }
+        // if (newMsg.mentions.includes(`<@${thisUser.id}>`))
+        // {
+        //     newMsg.msg.classList.add('mention');
+        // }
 
         if (edits.length !== 0)
         {
@@ -145,22 +145,6 @@ export default class Message
                 document.removeEventListener('mousemove', innerBehavior)
             });
         }
-        newMsg.msg.addEventListener('auxclick', (evt) => {
-            if (evt.target === newMsg.msg)
-            {
-                window.addEventListener('contextmenu', (evt) => evt.preventDefault(), { once: true });
-                newMsg.delete({ username: thisUser.username, id: thisUser.id }, false);
-            }
-        });
-        newMsg.msg.addEventListener('click', (evt) => {
-            if (evt.target === newMsg.msg)
-            {
-                newMsg.edit({
-                    username: thisUser.username,
-                    id: thisUser.id
-                });
-            }
-        });
         
         return newMsg;
     }

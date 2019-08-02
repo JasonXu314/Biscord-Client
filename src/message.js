@@ -64,7 +64,7 @@ export default class Message
             this.msg.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}\u1F534 \u1F171iscord`;
+                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}🔴 🅱iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {
@@ -118,7 +118,7 @@ export default class Message
             newMsg.msg.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}\u1F534 \u1F171iscord`;
+                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}🔴 🅱iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {

@@ -142,7 +142,10 @@ export default class Connection
                 connection.send(JSON.stringify({
                     type: 'delete',
                     id: options.id,
-                    msgID: options.msgID
+                    creds: {
+                        id: thisUser.id,
+                        username: thisUser.username
+                    }
                 }));
                 break;
             case ('edit'):

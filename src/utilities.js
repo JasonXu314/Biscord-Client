@@ -3,10 +3,14 @@ import $ from 'jquery';
 
 /**
  * Internal record of users (used in mention parsing)
- * @type {Map<string, User>}
+ * @type {Map<number, User>}
  */
 const userMap = new Map();
 
+/**
+ * Internal record of messages (used in deletion)
+ * @type {Map<number, Message>}
+ */
 const messageCache = new Map();
 
 /**
@@ -20,7 +24,7 @@ export function addUser(user)
 
 /**
  * Gets a user from the client's internal record of users by id
- * @param {string} id the UUID of the user to be retrieved
+ * @param {number} id the UUID of the user to be retrieved
  */
 export function retrieveUserByID(id)
 {
@@ -40,7 +44,6 @@ export function retrieveUserByName(name)
             return user;
         }
     }
-    return undefined;
 }
 
 /**

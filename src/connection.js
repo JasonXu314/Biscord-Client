@@ -108,7 +108,7 @@ export default class Connection
                                     }
                                     break;
                                 case ('join'):
-                                    addUser(User.DummyUser(JSON.parse(msg.data).username, JSON.parse(msg.data).id));
+                                    addUser(User.DummyUser(JSON.parse(msg.data).user.username, JSON.parse(msg.data).user.id));
                                     break;
                             }
                         });

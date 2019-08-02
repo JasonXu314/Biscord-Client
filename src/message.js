@@ -164,7 +164,9 @@ export default class Message {
                 });
             }
             document.getElementById('messageBoard').removeChild(this.element);
-        } else {
+        }
+        else
+        {
             alert("Please do not try to delete other peoples' messages!");
         }
     }
@@ -236,7 +238,9 @@ export default class Message {
                                 document.removeEventListener('mousemove', innerBehavior)
                             });
                             this.element.appendChild(sub);
-                        } else {
+                        }
+                        else
+                        {
                             document.getElementById(`${this.id}sub`).textContent = `edited (${this.edits.length})`;
                             this.element.appendChild(this.element.removeChild(document.getElementById(`${this.id}sub`)));
                         }
@@ -252,7 +256,9 @@ export default class Message {
                             this.element.removeChild(editor);
                             document.removeEventListener('keydown', behavior);
                             document.removeEventListener('keydown', escBehavior);
-                        } else {
+                        }
+                        else
+                        {
                             this.element.removeChild(editor);
                             this.element.appendChild(this.msg);
                             document.removeEventListener('keydown', behavior);
@@ -263,10 +269,14 @@ export default class Message {
                 document.addEventListener('keydown', escBehavior);
                 this.element.replaceChild(editor, this.msg);
                 editor.focus();
-            } else {
+            }
+            else
+            {
                 alert("Please do not try to edit other peoples' messages!");
             }
-        } else {
+        }
+        else
+        {
             this.edits.push(this.messageDisplay);
             if (this.edits.length === 1) {
                 const sub = document.createElement('sub');
@@ -296,7 +306,9 @@ export default class Message {
                     document.removeEventListener('mousemove', innerBehavior)
                 });
                 this.element.appendChild(sub);
-            } else {
+            }
+            else
+            {
                 document.getElementById(`${this.id}sub`).textContent = `edited (${this.edits.length})`;
                 this.element.appendChild(this.element.removeChild(document.getElementById(`${this.id}sub`)));
             }
@@ -324,7 +336,9 @@ export default class Message {
                     once: true
                 });
             }
-        } else {
+        }
+        else
+        {
             if (this.element.classList.contains('mention')) {
                 this.element.classList.remove('mention');
                 document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 === 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;

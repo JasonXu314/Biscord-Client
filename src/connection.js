@@ -1,7 +1,7 @@
 import { windowBehavior, addUser, addMessage } from './utilities.js';
 import User from './user.js';
 import Message from './message.js';
-import { thisUser, wipe, setUser } from './obj-oriented-client.js';
+import { thisUser, wipe } from './obj-oriented-client.js';
 
 /**
  * Connection to the server
@@ -89,8 +89,6 @@ export default class Connection
                     else if (JSON.parse(msg.data).type === 'success')
                     {
                         user = new User(username);
-                        resolve(user);
-                        setUser(user);
                         connection.send(JSON.stringify({
                             type: 'update',
                             user: user
@@ -110,13 +108,11 @@ export default class Connection
                                     }
                                     break;
                                 case ('join'):
-                                        if (JSON.parse(msg.data).user.id !== thisUser.id)
-                                        {
-                                            addUser(User.DummyUser(JSON.parse(msg.data).username, JSON.parse(msg.data).id));
-                                        }
+                                    addUser(User.DummyUser(JSON.parse(msg.data).username, JSON.parse(msg.data).id));
                                     break;
                             }
                         });
+                        resolve(user);
                     }
                 }, { once: true });
             }, { once: true });

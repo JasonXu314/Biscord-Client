@@ -10,11 +10,6 @@ import $ from 'jquery';
  */
 export let thisUser;
 
-export function setUser(user)
-{
-    thisUser = user;
-}
-
 export function wipe()
 {
     $('#join').off();

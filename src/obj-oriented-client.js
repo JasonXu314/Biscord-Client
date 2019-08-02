@@ -88,3 +88,10 @@ window.addEventListener('contextmenu', (evt) => {
         evt.preventDefault();
     }
 });
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible')
+    {
+        window.scrollBy({ top: window.outerHeight });
+    }
+});

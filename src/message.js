@@ -23,7 +23,7 @@ export default class Message
          * Converts all mentions to the username of the respective User
          * @type {string}
          */
-        this.messageDisplay = message.replace(/<@(?:\d){13}>/g, (substring) => `@${retrieveUserByID(substring.slice(2, -1)).username}`);
+        this.messageDisplay = message.replace(/<@(?:\d){13}>/g, (substring) => `@${retrieveUserByID(parseInt(substring.slice(2, -1))).username}`);
 
         /**
          * The sender of this Message
@@ -64,14 +64,11 @@ export default class Message
             this.msg.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}🔴 🅱iscord`;
+                document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {
-                        document.title = '\u1F171iscord';
-                        window.scrollBy({
-                            top: window.outerHeight
-                        });
+                        document.title = '🅱iscord';
                     }
                 }, { once: true });
             }
@@ -113,28 +110,17 @@ export default class Message
         newMsg.msg.textContent = `${newMsg.author.username}: ${newMsg.messageDisplay}`;
         newMsg.element.id = id;
         newMsg.msg.classList.add('message');
-        if (newMsg.mentions.includes(`<@${thisUser.id}>`))
+
+        if (this.mentions.includes(`<@${thisUser.id}>`))
         {
-            newMsg.msg.classList.add('mention');
-            if (document.visibilityState === 'hidden')
-            {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}🔴 🅱iscord`;
-                document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible')
-                    {
-                        document.title = '\u1F171iscord';
-                        window.scrollBy({
-                            top: window.outerHeight
-                        });
-                    }
-                }, { once: true });
-            }
+            this.msg.classList.add('mention');
         }
+
         if (edits.length !== 0)
         {
             const sub = document.createElement('sub');
             sub.textContent = `edited (${edits.length})`;
-            sub.id = `${this.id}sub`;
+            sub.id = `${newMsg.id}sub`;
             sub.addEventListener('mouseover', (evt) => {
                 let display = document.createElement('div');
                 display.id = 'editDiv';
@@ -197,8 +183,8 @@ export default class Message
         if (this.author.check(creds))
         {
             Connection.request('delete', {
-                id: this.author.id,
-                msgID: this.id
+                id: this.id,
+                creds: creds
             });
             document.getElementById('messageBoard').removeChild(this.element);
         }

@@ -77,7 +77,7 @@ export default class Message
             if (evt.target === this.msg)
             {
                 window.addEventListener('contextmenu', (evt) => evt.preventDefault(), { once: true });
-                this.delete({ username: thisUser.username, id: thisUser.id }, true);
+                this.delete({ username: thisUser.username, id: thisUser.id }, false);
             }
         });
         this.msg.addEventListener('click', (evt) => {
@@ -149,7 +149,7 @@ export default class Message
             if (evt.target === newMsg.msg)
             {
                 window.addEventListener('contextmenu', (evt) => evt.preventDefault(), { once: true });
-                newMsg.delete({ username: thisUser.username, id: thisUser.id }, true);
+                newMsg.delete({ username: thisUser.username, id: thisUser.id }, false);
             }
         });
         newMsg.msg.addEventListener('click', (evt) => {

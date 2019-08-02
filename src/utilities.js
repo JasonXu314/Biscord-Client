@@ -29,7 +29,7 @@ export function addUser(user)
  */
 export function retrieveUserByID(id)
 {
-    console.log(userMap.has(id), userMap.get(id));
+    console.log(userMap.keys(), userMap.get(id));
     console.log(userMap);
     return userMap.get(id);
 }

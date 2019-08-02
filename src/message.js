@@ -176,17 +176,22 @@ export default class Message {
      * @param {UserCredentials} creds credentials of the user trying to edit the message
      * @param {string} newMsg the message to edit it to (use only upon receiving 'edit' signal from server)
      */
-    edit(creds, newMsg = undefined) {
-        if (newMsg === undefined) {
-            if (this.author.check(creds)) {
+    edit(creds, newMsg = undefined)
+    {
+        if (newMsg === undefined)
+        {
+            if (this.author.check(creds))
+            {
                 let editor = document.createElement('input');
                 editor.id = 'editor';
                 editor.autocomplete = 'off';
                 const behavior = (evt) => {
-                    if (evt.code === 'Enter' && evt.target === editor) {
+                    if (evt.code === 'Enter' && evt.target === editor)
+                    {
                         const newMsgDisplay = editor.value.trim();
 
-                        if (newMsgDisplay.length === 0) {
+                        if (newMsgDisplay.length === 0)
+                        {
                             this.delete(thisUser.creds, false);
                         }
 
@@ -210,7 +215,8 @@ export default class Message {
                         this.refreshMentions();
                         this.element.replaceChild(this.msg, editor);
 
-                        if (this.edits.length === 1) {
+                        if (this.edits.length === 1)
+                        {
                             const sub = document.createElement('sub');
                             sub.textContent = 'edited (1)';
                             sub.id = `${this.id}sub`;
@@ -248,8 +254,10 @@ export default class Message {
                 };
                 editor.addEventListener('keydown', behavior);
                 const escBehavior = (evt) => {
-                    if (evt.code === 'Escape' && evt.target === editor) {
-                        if (document.getElementById(`${this.id}sub`) !== null) {
+                    if (evt.code === 'Escape' && evt.target === editor)
+                    {
+                        if (document.getElementById(`${this.id}sub`) !== null)
+                        {
                             let sub = this.element.removeChild(document.getElementById(`${this.id}sub`));
                             this.element.appendChild(this.msg);
                             this.element.appendChild(sub);
@@ -278,7 +286,8 @@ export default class Message {
         else
         {
             this.edits.push(this.messageDisplay);
-            if (this.edits.length === 1) {
+            if (this.edits.length === 1)
+            {
                 const sub = document.createElement('sub');
                 sub.textContent = 'edited (1)';
                 sub.id = `${this.id}sub`;
@@ -322,24 +331,27 @@ export default class Message {
     /**
      * Used internally to update mentions of this message whenever an edit is made
      */
-    refreshMentions() {
+    refreshMentions()
+    {
         this.mentions = this.messageRaw.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...this.messageRaw.match(/<@(?:\d){13}>/g));
-        if (this.mentions.includes(`<@${thisUser.id}>`) && !this.element.classList.contains('mention')) {
+        if (this.mentions.includes(`<@${thisUser.id}>`) && !this.element.classList.contains('mention'))
+        {
             this.element.classList.add('mention');
-            if (document.visibilityState === 'hidden') {
+            if (document.visibilityState === 'hidden')
+            {
                 document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱iscord`;
                 document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible') {
+                    if (document.visibilityState === 'visible')
+                    {
                         document.title = '🅱iscord';
                     }
-                }, {
-                    once: true
-                });
+                }, { once: true });
             }
         }
         else
         {
-            if (this.element.classList.contains('mention')) {
+            if (this.element.classList.contains('mention'))
+            {
                 this.element.classList.remove('mention');
                 document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 === 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
             }

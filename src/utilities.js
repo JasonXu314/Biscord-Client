@@ -27,6 +27,10 @@ export function retrieveUserByID(id)
     return userMap.get(id);
 }
 
+/**
+ * Gets a user from the client's internal record of users by name
+ * @param {string} name the username of the user to be retrieved
+ */
 export function retrieveUserByName(name)
 {
     for (let user of userMap.values())
@@ -36,6 +40,7 @@ export function retrieveUserByName(name)
             return user;
         }
     }
+    return undefined;
 }
 
 /**

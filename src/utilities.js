@@ -1,4 +1,5 @@
 import User from './user';
+import Message from './message';
 import $ from 'jquery';
 
 /**
@@ -28,7 +29,7 @@ export function addUser(user)
  */
 export function retrieveUserByID(id)
 {
-    console.log(id, userMap.get(id));
+    console.log(userMap.has(id), userMap.get(id));
     console.log(userMap);
     return userMap.get(id);
 }
@@ -59,7 +60,7 @@ export function addMessage(message)
 
 /**
  * Gets a message from the client's internal cache of messages by id
- * @param {string} id the UUID of the message to be retrieved
+ * @param {number} id the UUID of the message to be retrieved
  */
 export function retrieveMessage(id)
 {

@@ -1,17 +1,21 @@
 import Connection from './connection.js';
 import User from './user.js';
-import { thisUser } from './obj-oriented-client.js';
-import { innerBehavior, retrieveUserByID, retrieveUserByName } from './utilities.js';
+import {
+    thisUser
+} from './obj-oriented-client.js';
+import {
+    innerBehavior,
+    retrieveUserByID,
+    retrieveUserByName
+} from './utilities.js';
 
-export default class Message
-{
+export default class Message {
     /**
      * To construct a message given input from the send field
      * @param {string} message text to be sent by the message
      * @param {User} sender the sender of the message
      */
-    constructor(message, sender)
-    {
+    constructor(message, sender) {
         /**
          * The message conveyed by this Message
          * @type {string}
@@ -59,30 +63,32 @@ export default class Message
         this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
         this.element.id = this.id;
         this.msg.classList.add('message');
-        if (this.mentions.includes(`<@${thisUser.id}>`))
-        {
+        if (this.mentions.includes(`<@${thisUser.id}>`)) {
             this.msg.classList.add('mention');
-            if (document.visibilityState === 'hidden')
-            {
+            if (document.visibilityState === 'hidden') {
                 document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱iscord`;
                 document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible')
-                    {
+                    if (document.visibilityState === 'visible') {
                         document.title = '🅱iscord';
                     }
-                }, { once: true });
+                }, {
+                    once: true
+                });
             }
         }
         this.msg.addEventListener('auxclick', (evt) => {
-            if (evt.target === this.msg)
-            {
-                window.addEventListener('contextmenu', (evt) => evt.preventDefault(), { once: true });
-                this.delete({ username: thisUser.username, id: thisUser.id }, false);
+            if (evt.target === this.msg) {
+                window.addEventListener('contextmenu', (evt) => evt.preventDefault(), {
+                    once: true
+                });
+                this.delete({
+                    username: thisUser.username,
+                    id: thisUser.id
+                }, false);
             }
         });
         this.msg.addEventListener('click', (evt) => {
-            if (evt.target === this.msg)
-            {
+            if (evt.target === this.msg) {
                 this.edit({
                     username: thisUser.username,
                     id: thisUser.id
@@ -98,15 +104,13 @@ export default class Message
      * @param {number} id the UUID of the message
      * @param {string[]} edits the edit history of the message
      */
-    static CreateMessage(message, sender, id, edits)
-    {
+    static CreateMessage(message, sender, id, edits) {
         const newMsg = new Message(message, User.DummyUser(sender.username, sender.id))
         newMsg.id = id;
         newMsg.element.id = id;
         newMsg.edits = edits;
 
-        if (edits.length !== 0)
-        {
+        if (edits.length !== 0) {
             const sub = document.createElement('sub');
             sub.textContent = `edited (${edits.length})`;
             sub.id = `${newMsg.id}sub`;
@@ -134,7 +138,7 @@ export default class Message
                 document.removeEventListener('mousemove', innerBehavior)
             });
         }
-        
+
         return newMsg;
     }
 
@@ -142,8 +146,7 @@ export default class Message
      * Function to render the message onto the DOM
      * @returns a DOM Element containing the message
      */
-    render()
-    {
+    render() {
         return this.element;
     }
 
@@ -152,21 +155,16 @@ export default class Message
      * @param {UserCredentials} creds
      * @param {boolean} quiet if true, will not notify server
      */
-    delete(creds, quiet)
-    {
-        if (this.author.check(creds))
-        {
-            if(!quiet)
-            {
+    delete(creds, quiet) {
+        if (this.author.check(creds)) {
+            if (!quiet) {
                 Connection.request('delete', {
                     id: this.id,
                     creds: creds
                 });
             }
             document.getElementById('messageBoard').removeChild(this.element);
-        }
-        else
-        {
+        } else {
             alert("Please do not try to delete other peoples' messages!");
         }
     }
@@ -176,22 +174,17 @@ export default class Message
      * @param {UserCredentials} creds credentials of the user trying to edit the message
      * @param {string} newMsg the message to edit it to (use only upon receiving 'edit' signal from server)
      */
-    edit(creds, newMsg = undefined)
-    {
-        if (newMsg === undefined)
-        {
-            if (this.author.check(creds))
-            {
+    edit(creds, newMsg = undefined) {
+        if (newMsg === undefined) {
+            if (this.author.check(creds)) {
                 let editor = document.createElement('input');
                 editor.id = 'editor';
                 editor.autocomplete = 'off';
                 const behavior = (evt) => {
-                    if (evt.code === 'Enter' && evt.target === editor)
-                    {
+                    if (evt.code === 'Enter' && evt.target === editor) {
                         const newMsgDisplay = editor.value.trim();
 
-                        if (newMsgDisplay.length === 0)
-                        {
+                        if (newMsgDisplay.length === 0) {
                             this.delete(thisUser.creds, false);
                         }
 
@@ -207,16 +200,15 @@ export default class Message
                                 id: this.author.id
                             }
                         });
-                        
+
                         this.edits.push(this.messageDisplay);
                         this.messageRaw = newMsgRaw;
                         this.messageDisplay = newMsgDisplay;
                         this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
                         this.refreshMentions();
                         this.element.replaceChild(this.msg, editor);
-            
-                        if (this.edits.length === 1)
-                        {
+
+                        if (this.edits.length === 1) {
                             const sub = document.createElement('sub');
                             sub.textContent = 'edited (1)';
                             sub.id = `${this.id}sub`;
@@ -244,9 +236,7 @@ export default class Message
                                 document.removeEventListener('mousemove', innerBehavior)
                             });
                             this.element.appendChild(sub);
-                        }
-                        else
-                        {
+                        } else {
                             document.getElementById(`${this.id}sub`).textContent = `edited (${this.edits.length})`;
                             this.element.appendChild(this.element.removeChild(document.getElementById(`${this.id}sub`)));
                         }
@@ -254,19 +244,15 @@ export default class Message
                 };
                 editor.addEventListener('keydown', behavior);
                 const escBehavior = (evt) => {
-                    if (evt.code === 'Escape' && evt.target === editor)
-                    {
-                        if (document.getElementById(`${this.id}sub`) !== null)
-                        {
+                    if (evt.code === 'Escape' && evt.target === editor) {
+                        if (document.getElementById(`${this.id}sub`) !== null) {
                             let sub = this.element.removeChild(document.getElementById(`${this.id}sub`));
                             this.element.appendChild(this.msg);
                             this.element.appendChild(sub);
                             this.element.removeChild(editor);
                             document.removeEventListener('keydown', behavior);
                             document.removeEventListener('keydown', escBehavior);
-                        }
-                        else
-                        {
+                        } else {
                             this.element.removeChild(editor);
                             this.element.appendChild(this.msg);
                             document.removeEventListener('keydown', behavior);
@@ -277,15 +263,43 @@ export default class Message
                 document.addEventListener('keydown', escBehavior);
                 this.element.replaceChild(editor, this.msg);
                 editor.focus();
-            }
-            else
-            {
+            } else {
                 alert("Please do not try to edit other peoples' messages!");
             }
-        }
-        else
-        {
+        } else {
             this.edits.push(this.messageDisplay);
+            if (this.edits.length === 1) {
+                const sub = document.createElement('sub');
+                sub.textContent = 'edited (1)';
+                sub.id = `${this.id}sub`;
+                sub.addEventListener('mouseover', (evt) => {
+                    let display = document.createElement('div');
+                    display.id = 'editDiv';
+                    let editBoard = document.createElement('table');
+                    display.appendChild(editBoard);
+                    display.setAttribute('style', `top:${evt.pageY - 45}px;left:${evt.pageX - 45}px;position:absolute;`);
+                    editBoard.setAttribute('class', 'messageBoard');
+                    this.edits.forEach((editMsg) => {
+                        let editTr = document.createElement('tr');
+                        let editTd = document.createElement('td');
+                        editTd.textContent = editMsg;
+                        editTd.setAttribute('class', 'message');
+                        editTr.appendChild(editTd);
+                        editBoard.appendChild(editTr);
+                    });
+                    display.appendChild(editBoard);
+                    document.body.appendChild(display);
+                    document.addEventListener('mousemove', innerBehavior);
+                });
+                sub.addEventListener('mouseout', () => {
+                    document.body.removeChild(document.getElementById('editDiv'));
+                    document.removeEventListener('mousemove', innerBehavior)
+                });
+                this.element.appendChild(sub);
+            } else {
+                document.getElementById(`${this.id}sub`).textContent = `edited (${this.edits.length})`;
+                this.element.appendChild(this.element.removeChild(document.getElementById(`${this.id}sub`)));
+            }
             this.messageRaw = newMsg;
             this.messageDisplay = newMsg.replace(/<@(?:\d){13}>/g, (substring) => `@${retrieveUserByID(parseInt(substring.slice(2, -1))).username}`);
             this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
@@ -296,27 +310,22 @@ export default class Message
     /**
      * Used internally to update mentions of this message whenever an edit is made
      */
-    refreshMentions()
-    {
+    refreshMentions() {
         this.mentions = this.messageRaw.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...this.messageRaw.match(/<@(?:\d){13}>/g));
-        if (this.mentions.includes(`<@${thisUser.id}>`) && !this.element.classList.contains('mention'))
-        {
+        if (this.mentions.includes(`<@${thisUser.id}>`) && !this.element.classList.contains('mention')) {
             this.element.classList.add('mention');
-            if (document.visibilityState === 'hidden')
-            {
+            if (document.visibilityState === 'hidden') {
                 document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱iscord`;
                 document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible')
-                    {
+                    if (document.visibilityState === 'visible') {
                         document.title = '🅱iscord';
                     }
-                }, { once: true });
+                }, {
+                    once: true
+                });
             }
-        }
-        else
-        {
-            if (this.element.classList.contains('mention'))
-            {
+        } else {
+            if (this.element.classList.contains('mention')) {
                 this.element.classList.remove('mention');
                 document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 === 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
             }

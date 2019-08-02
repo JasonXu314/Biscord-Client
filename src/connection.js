@@ -162,8 +162,9 @@ export default class Connection
                 connection.send(JSON.stringify({
                     type: 'edit',
                     id: options.id,
-                    newMsg: options.newMsg,
-                    oldMsg: options.oldMsg,
+                    newMsgRaw: options.newMsgRaw,
+                    newMsgDisplay: options.newMsgDisplay,
+                    oldMsgDisplay: options.oldMsgDisplay,
                     creds: options.creds
                 }));
                 break;

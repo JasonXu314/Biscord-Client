@@ -178,7 +178,7 @@ export default class Message
      */
     edit(creds, newMsg = undefined)
     {
-        if (newMsg !== undefined)
+        if (newMsg === undefined)
         {
             if (this.author.check(creds))
             {
@@ -282,6 +282,7 @@ export default class Message
             this.edits.push(this.messageDisplay);
             this.messageRaw = newMsg;
             this.messageDisplay = newMsg.replace(/<@(?:\d){13}>/g, (substring) => `@${retrieveUserByID(parseInt(substring.slice(2, -1))).username}`);
+            this.msg.textContent = this.messageDisplay;
             this.refreshMentions();
         }
     }

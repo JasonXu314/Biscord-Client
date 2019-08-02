@@ -189,6 +189,12 @@ export default class Message
                     if (evt.code === 'Enter' && evt.target === editor)
                     {
                         const newMsgDisplay = editor.value.trim();
+
+                        if (newMsgDisplay.length === 0)
+                        {
+                            this.delete(thisUser.creds, false);
+                        }
+
                         const newMsgRaw = newMsgDisplay.replace(/@[a-zA-Z0-9_-]+/g, (substring) => retrieveUserByName(substring.slice(1)) === undefined ? substring : `<@${retrieveUserByName(substring.slice(1)).id}>`);
 
                         Connection.request('edit', {
@@ -282,7 +288,7 @@ export default class Message
             this.edits.push(this.messageDisplay);
             this.messageRaw = newMsg;
             this.messageDisplay = newMsg.replace(/<@(?:\d){13}>/g, (substring) => `@${retrieveUserByID(parseInt(substring.slice(2, -1))).username}`);
-            this.msg.textContent = this.messageDisplay;
+            this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
             this.refreshMentions();
         }
     }
@@ -293,7 +299,7 @@ export default class Message
     refreshMentions()
     {
         this.mentions = this.messageRaw.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...this.messageRaw.match(/<@(?:\d){13}>/g));
-        if (this.mentions.includes(`<@${thisUser.id}>`))
+        if (this.mentions.includes(`<@${thisUser.id}>`) && !this.element.classList.contains('mention'))
         {
             this.element.classList.add('mention');
             if (document.visibilityState === 'hidden')
@@ -312,8 +318,8 @@ export default class Message
             if (this.element.classList.contains('mention'))
             {
                 this.element.classList.remove('mention');
+                document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 === 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
             }
-            document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 === 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
         }
     }
 }

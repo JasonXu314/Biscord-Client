@@ -176,9 +176,9 @@ export default class Message
      * @param {UserCredentials} creds credentials of the user trying to edit the message
      * @param {string} newMsg the message to edit it to (use only upon receiving 'edit' signal from server)
      */
-    edit(creds, newMsg)
+    edit(creds, newMsg = undefined)
     {
-        if (!newMsg)
+        if (newMsg !== undefined)
         {
             if (this.author.check(creds))
             {

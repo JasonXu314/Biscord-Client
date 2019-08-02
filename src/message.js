@@ -102,19 +102,8 @@ export default class Message
     {
         const newMsg = new Message(message, User.DummyUser(sender.username, sender.id))
         newMsg.id = id;
-        newMsg.edits = edits;
-
-        // newMsg.element = document.createElement('tr');
-        // newMsg.msg = document.createElement('td');
-        // newMsg.element.appendChild(newMsg.msg);
-        // newMsg.msg.textContent = `${newMsg.author.username}: ${newMsg.messageDisplay}`;
         newMsg.element.id = id;
-        // newMsg.msg.classList.add('message');
-
-        // if (newMsg.mentions.includes(`<@${thisUser.id}>`))
-        // {
-        //     newMsg.msg.classList.add('mention');
-        // }
+        newMsg.edits = edits;
 
         if (edits.length !== 0)
         {

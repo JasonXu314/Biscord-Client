@@ -65,6 +65,15 @@ export function retrieveMessage(id)
     return messageCache.get(id);
 }
 
+/**
+ * Removes a message from the client's internal cache
+ * @param {number} id the UUID of the message to be removed
+ */
+export function removeMessage(id)
+{
+    messageCache.delete(id);
+}
+
 export const windowBehavior = (evt) => {
     if (evt.keyCode === 13 && evt.target.id === 'input')
     {

@@ -77,7 +77,7 @@ export default class Message
             if (evt.target === this.msg)
             {
                 window.addEventListener('contextmenu', (evt) => evt.preventDefault(), { once: true });
-                this.delete({ username: thisUser.username, id: thisUser.id });
+                this.delete({ username: thisUser.username, id: thisUser.id }, true);
             }
         });
         this.msg.addEventListener('click', (evt) => {
@@ -149,7 +149,7 @@ export default class Message
             if (evt.target === newMsg.msg)
             {
                 window.addEventListener('contextmenu', (evt) => evt.preventDefault(), { once: true });
-                newMsg.delete({ username: thisUser.username, id: thisUser.id });
+                newMsg.delete({ username: thisUser.username, id: thisUser.id }, true);
             }
         });
         newMsg.msg.addEventListener('click', (evt) => {
@@ -177,15 +177,19 @@ export default class Message
     /**
      * Deletes this message
      * @param {UserCredentials} creds
+     * @param {boolean} quiet if true, will not notify server
      */
-    delete(creds)
+    delete(creds, quiet)
     {
         if (this.author.check(creds))
         {
-            Connection.request('delete', {
-                id: this.id,
-                creds: creds
-            });
+            if(!quiet)
+            {
+                Connection.request('delete', {
+                    id: this.id,
+                    creds: creds
+                });
+            }
             document.getElementById('messageBoard').removeChild(this.element);
         }
         else
@@ -225,7 +229,7 @@ export default class Message
                             }
                         });
                         
-                        this.edits.push(this.messageRaw);
+                        this.edits.push(this.messageDisplay);
                         this.messageRaw = newMsg;
                         this.messageDisplay = this.messageRaw.replace(/<@(?:\d){13}>/, (substring) => retrieveUserByID(substring.slice(2, -1)));
                         this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
@@ -302,7 +306,10 @@ export default class Message
         }
         else
         {
-
+            this.edits.push(this.messageDisplay);
+            this.messageRaw = newMsg;
+            this.messageDisplay = newMsg.replace(/<@(?:\d){13}>/g, (substring) => `@${retrieveUserByID(parseInt(substring.slice(2, -1))).username}`);
+            this.refreshMentions();
         }
     }
 
@@ -317,14 +324,11 @@ export default class Message
             this.element.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d*/).length === 0 ? 1 : parseInt(document.title.match(/\d*/)[0]) + 1}🔴 🅱iscord`;
+                document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {
                         document.title = '🅱iscord';
-                        window.scrollBy({
-                            top: window.outerHeight
-                        });
                     }
                 }, { once: true });
             }
@@ -335,6 +339,7 @@ export default class Message
             {
                 this.element.classList.remove('mention');
             }
+            document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 === 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
         }
     }
 }

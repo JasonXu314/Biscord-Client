@@ -108,12 +108,16 @@ export default class Connection
                                     }
                                     break;
                                 case ('delete'):
-                                    console.log('hi');
                                     if (!thisUser.check(JSON.parse(msg.data).creds))
                                     {
-                                        console.log('inside');
                                         retrieveMessage(parseInt(JSON.parse(msg.data).id)).delete(JSON.parse(msg.data).creds, true);
                                         removeMessage(parseInt(JSON.parse(msg.data).id));
+                                    }
+                                    break;
+                                case ('edit'):
+                                    if (!thisUser.check(JSON.parse(msg.data).creds))
+                                    {
+                                        retrieveMessage(parseInt(JSON.parse(msg.data).id)).edit(JSON.parse(msg.data).creds, JSON.parse(msg.data).newMsgRaw);
                                     }
                                     break;
                                 case ('join'):

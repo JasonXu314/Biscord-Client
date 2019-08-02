@@ -188,14 +188,14 @@ export default class Message
                 const behavior = (evt) => {
                     if (evt.code === 'Enter' && evt.target === editor)
                     {
-                        const newMsg = editor.value.trim();
-                        
-                        if (newMsg === undefined) return;
+                        const newMsgDisplay = editor.value.trim();
+                        const newMsgRaw = newMsgDisplay.replace(/@[a-zA-Z0-9_-]+/g, (substring) => retrieveUserByName(substring.slice(1)) === undefined ? substring : `<@${retrieveUserByName(substring.slice(1)).id}>`);
 
                         Connection.request('edit', {
                             id: this.id,
-                            newMsg: newMsg,
-                            oldMsg: this.messageRaw,
+                            newMsgRaw: newMsgRaw,
+                            newMsgDisplay: newMsgDisplay,
+                            oldMsgDisplay: this.messageDisplay,
                             creds: {
                                 username: this.author.username,
                                 id: this.author.id

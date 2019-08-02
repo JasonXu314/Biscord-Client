@@ -28,6 +28,7 @@ export function addUser(user)
  */
 export function retrieveUserByID(id)
 {
+    console.log(userMap);
     return userMap.get(id);
 }
 

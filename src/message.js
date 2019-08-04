@@ -333,15 +333,10 @@ export default class Message {
      */
     refreshMentions()
     {
-        console.log('hi');
         this.mentions = this.messageRaw.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...this.messageRaw.match(/<@(?:\d){13}>/g));
-        console.log(this.mentions);
-        console.log(!this.mentions.includes(`<@${thisUser.id}>`), this.element.classList.contains('mention'));
-        console.log(this.element)
-        if (this.mentions.includes(`<@${thisUser.id}>`) && !this.element.classList.contains('mention'))
+        if (this.mentions.includes(`<@${thisUser.id}>`) && !this.msg.classList.contains('mention'))
         {
-            console.log('inside');
-            this.element.classList.add('mention');
+            this.msg.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
                 document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱iscord`;
@@ -353,10 +348,9 @@ export default class Message {
                 }, { once: true });
             }
         }
-        else if (!this.mentions.includes(`<@${thisUser.id}>`) && this.element.classList.contains('mention'))
+        else if (!this.mentions.includes(`<@${thisUser.id}>`) && this.msg.classList.contains('mention'))
         {
-            console.log('inside 2');
-            this.element.classList.remove('mention');
+            this.msg.classList.remove('mention');
             document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 <= 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
         }
     }

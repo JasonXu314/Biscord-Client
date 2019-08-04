@@ -54,6 +54,10 @@ export function wipe()
         board.appendChild(inputRow);
         document.body.appendChild(board);
         input.focus();
+
+        const userList = document.createElement('table');
+        userList.id = 'userList';
+        document.body.appendChild(userList);
     
         document.removeEventListener('keydown', windowBehavior);
         document.addEventListener('keydown', (evt) => {

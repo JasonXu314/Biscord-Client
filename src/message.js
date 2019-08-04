@@ -193,6 +193,7 @@ export default class Message {
                         if (newMsgDisplay.length === 0)
                         {
                             this.delete(thisUser.creds, false);
+                            return;
                         }
 
                         const newMsgRaw = newMsgDisplay.replace(/@[a-zA-Z0-9_-]+/g, (substring) => retrieveUserByName(substring.slice(1)) === undefined ? substring : `<@${retrieveUserByName(substring.slice(1)).id}>`);

@@ -24,6 +24,15 @@ export function addUser(user)
 }
 
 /**
+ * Removes a user from this client's internal record of users
+ * @param {User} user the user to be removed from the map
+ */
+export function removeUser(id)
+{
+    userMap.delete(id);
+}
+
+/**
  * Gets a user from the client's internal record of users by id
  * @param {number} id the UUID of the user to be retrieved
  */

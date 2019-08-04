@@ -1,4 +1,4 @@
-import { windowBehavior, addUser, addMessage, retrieveMessage, removeMessage } from './utilities.js';
+import { windowBehavior, addUser, addMessage, retrieveMessage, removeMessage, removeUser } from './utilities.js';
 import User from './user.js';
 import Message from './message.js';
 import { thisUser, wipe } from './obj-oriented-client.js';
@@ -122,6 +122,17 @@ export default class Connection
                                     break;
                                 case ('join'):
                                     addUser(User.DummyUser(JSON.parse(msg.data).user.username, JSON.parse(msg.data).user.id));
+                                    const tr = document.createElement('tr');
+                                    tr.id = JSON.parse(msg.data).user.id;
+                                    const userEntry = document.createElement('td');
+                                    userEntry.className = 'userEntry';
+                                    userEntry.textContent = JSON.parse(msg.data).user.username;
+                                    tr.appendChild(userEntry);
+                                    document.getElementById('userList').appendChild(tr);
+                                    break;
+                                case ('disconnect'):
+                                    removeUser(JSON.parse(msg.data).user.id);
+                                    document.getElementById('userList').removeChild(document.getElementById(JSON.parse(msg.data).user.id));
                                     break;
                             }
                         });

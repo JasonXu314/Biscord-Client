@@ -348,13 +348,10 @@ export default class Message {
                 }, { once: true });
             }
         }
-        else
+        else if (this.element.classList.contains('mention'))
         {
-            if (this.element.classList.contains('mention'))
-            {
-                this.element.classList.remove('mention');
-                document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 === 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
-            }
+            this.element.classList.remove('mention');
+            document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 === 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
         }
     }
 }

@@ -337,6 +337,7 @@ export default class Message {
         this.mentions = this.messageRaw.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...this.messageRaw.match(/<@(?:\d){13}>/g));
         console.log(this.mentions);
         console.log(!this.mentions.includes(`<@${thisUser.id}>`), this.element.classList.contains('mention'));
+        console.log(this.element)
         if (this.mentions.includes(`<@${thisUser.id}>`) && !this.element.classList.contains('mention'))
         {
             console.log('inside');

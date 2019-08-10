@@ -3,8 +3,9 @@ export default class User
     /**
      * Default constructor; should be used by client when registering user
      * @param {string} name the username of the user being retistered
+     * @param {string} iconURL the icon of the user
      */
-    constructor(name)
+    constructor(name, iconURL)
     {
         /**
          * Username of the user
@@ -12,6 +13,14 @@ export default class User
          * @readonly
          */
         this.username = name;
+
+        /**
+         * Data for the icon; used for transmission over WebSocket
+         * @property {string} src the data URL for the image icon
+         */
+        this.icon = {
+            src: iconURL || `./defaultIcon${Math.round(Math.random() * 2) + 1}.png`
+        };
 
         /**
          * UUID of the user
@@ -25,10 +34,11 @@ export default class User
      * Should only be used when creating a dummy user to represent another user in the chat room
      * @param {string} name the username of the user
      * @param {number} id the UUID of the user
+     * @param {string} iconURL the URL of the icon for the user
      */
-    static DummyUser(name, id)
+    static DummyUser(name, id, iconURL)
     {
-        const newUser = new User(name);
+        const newUser = new User(name, iconURL);
         newUser.id = id;
         return newUser;
     }

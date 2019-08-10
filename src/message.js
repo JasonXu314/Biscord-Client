@@ -14,8 +14,9 @@ export default class Message {
      * To construct a message given input from the send field
      * @param {string} message text to be sent by the message
      * @param {User} sender the sender of the message
+     * @param {string} channel the name of the channel this message belongs to
      */
-    constructor(message, sender) {
+    constructor(message, sender, channel) {
         /**
          * The message conveyed by this Message
          * @type {string}
@@ -57,23 +58,39 @@ export default class Message {
          */
         this.edits = [];
 
+        /**
+         * This user's icon image
+         * @type {HTMLImageElement}
+         * @readonly
+         */
+        this.icon = sender.iconElement;
+
+        /**
+         * The channel this message belongs to
+         * @type {string}
+         * @readonly
+         */
+        this.channel = channel;
+
         this.element = document.createElement('tr');
         this.msg = document.createElement('td');
         this.element.appendChild(this.msg);
         this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
         this.element.id = this.id;
         this.msg.classList.add('message');
-        if (this.mentions.includes(`<@${thisUser.id}>`)) {
+        if (this.mentions.includes(`<@${thisUser.id}>`))
+        {
             this.msg.classList.add('mention');
-            if (document.visibilityState === 'hidden') {
+            if (document.visibilityState === 'hidden')
+            {
                 document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱iscord`;
-                document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible') {
+                document.addEventListener('visibilitychange', () =>
+                {
+                    if (document.visibilityState === 'visible')
+                    {
                         document.title = '🅱iscord';
                     }
-                }, {
-                    once: true
-                });
+                }, { once: true });
             }
         }
         this.msg.addEventListener('auxclick', (evt) => {
@@ -104,8 +121,9 @@ export default class Message {
      * @param {number} id the UUID of the message
      * @param {string[]} edits the edit history of the message
      */
-    static CreateMessage(message, sender, id, edits) {
-        const newMsg = new Message(message, User.DummyUser(sender.username, sender.id))
+    static CreateMessage(message, sender, id, edits)
+    {
+        const newMsg = new Message(message, User.DummyUser(sender.username, sender.id, sender.icon.src));
         newMsg.id = id;
         newMsg.element.id = id;
         newMsg.edits = edits;

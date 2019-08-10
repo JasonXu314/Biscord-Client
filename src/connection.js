@@ -1,7 +1,8 @@
-import { windowBehavior, addUser, addMessage, retrieveMessage, removeMessage, removeUser } from './utilities.js';
+import { windowBehavior, addUser, addMessage, retrieveMessage, removeMessage, removeUser, retrieveCard } from './utilities.js';
 import User from './user.js';
 import Message from './message.js';
-import { thisUser, wipe } from './obj-oriented-client.js';
+import { thisUser, wipe, thisIcon } from './obj-oriented-client.js';
+import $ from 'jquery';
 
 /**
  * Connection to the server
@@ -23,7 +24,7 @@ export default class Connection
         alert ('Warning: malicious code detected');
         if (!connection)
         {
-            connection = new WebSocket('ws://localhost:3000');
+            connection = new WebSocket('ws://65.199.30.194:3000');
             connection.onopen = () => connection.send(JSON.stringify({
                 type: 'emergency',
                 message: 'Connection instantiated'
@@ -43,12 +44,12 @@ export default class Connection
     /**
      * Used to initialize the connection, polls the server to register a nickname
      * @param {String} username the username the client is registering with
-     * @returns {Promise<User>} the user that is registered
+     * @returns {Promise<User | null>} the user that is registered
      */
     static register(username)
     {
-        /** @type {User} */
-        let user;
+        /** @type {User | null} */
+        let user = null;
         return new Promise((resolve, reject) => {
             connection = new WebSocket('ws://localhost:3000');
             connection.addEventListener('open', () => {
@@ -59,7 +60,8 @@ export default class Connection
                 connection.addEventListener('message', (msg) => {
                     if (JSON.parse(msg.data).type === 'rejection')
                     {
-                        Array(...document.body.children).forEach((elmnt) => elmnt.parentElement.removeChild(elmnt));
+                        console.log('hi');
+                        $(document.body.children).remove();
                         let h3 = document.createElement('h3');
                         h3.textContent = 'Please enter a username';
                         h3.id = 'text';
@@ -85,10 +87,11 @@ export default class Connection
                         
                         connection = null;
                         resolve(user);
+                        return;
                     }
                     else if (JSON.parse(msg.data).type === 'success')
                     {
-                        user = new User(username);
+                        user = new User(username, thisIcon.src);
                         connection.send(JSON.stringify({
                             type: 'update',
                             user: user
@@ -99,38 +102,96 @@ export default class Connection
                                 case ('message'):
                                     if (JSON.parse(msg.data).message.author.id !== thisUser.id)
                                     {
+                                        console.log('message');
                                         let message = Message.CreateMessage(JSON.parse(msg.data).message.messageRaw, {
                                             username: JSON.parse(msg.data).message.author.username,
-                                            id: JSON.parse(msg.data).message.author.id
+                                            id: JSON.parse(msg.data).message.author.id,
+                                            icon: JSON.parse(msg.data).message.author.icon
                                         }, JSON.parse(msg.data).message.id, JSON.parse(msg.data).message.edits);
-                                        document.getElementById('messageBoard').insertBefore(message.render(), document.getElementById('inputRow'));
+                                        $(message.render()).insertBefore($('#inputRow'));
                                         addMessage(message);
                                     }
                                     break;
                                 case ('delete'):
+                                    console.log('delete');
                                     if (!thisUser.check(JSON.parse(msg.data).creds))
                                     {
-                                        retrieveMessage(parseInt(JSON.parse(msg.data).id)).delete(JSON.parse(msg.data).creds, true);
-                                        removeMessage(parseInt(JSON.parse(msg.data).id));
+                                        const delMessage = retrieveMessage(JSON.parse(msg.data).id);
+                                        if (delMessage.mentions.includes(`<@${thisUser.id}>`))
+                                        {
+                                            document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 <= 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
+                                        }
+                                        delMessage.delete(JSON.parse(msg.data).creds, true);
+                                        removeMessage(JSON.parse(msg.data).id);
                                     }
                                     break;
                                 case ('edit'):
+                                    console.log('edit');
                                     if (!thisUser.check(JSON.parse(msg.data).creds))
                                     {
-                                        retrieveMessage(parseInt(JSON.parse(msg.data).id)).edit(JSON.parse(msg.data).creds, JSON.parse(msg.data).newMsgRaw);
+                                        retrieveMessage(JSON.parse(msg.data).id).edit(JSON.parse(msg.data).creds, JSON.parse(msg.data).newMsgRaw);
                                     }
                                     break;
                                 case ('join'):
-                                    addUser(User.DummyUser(JSON.parse(msg.data).user.username, JSON.parse(msg.data).user.id));
+                                    console.log('join');
+                                    addUser(User.DummyUser(JSON.parse(msg.data).user.username, JSON.parse(msg.data).user.id, JSON.parse(msg.data).user.icon.src));
                                     const tr = document.createElement('tr');
                                     tr.id = JSON.parse(msg.data).user.id;
+                                    const icon = new Image(50, 50);
+                                    icon.src = JSON.parse(msg.data).user.icon.src;
+                                    $(icon).css('border', '3px solid black');
+                                    icon.onload = () => tr.prepend(icon);
                                     const userEntry = document.createElement('td');
                                     userEntry.className = 'userEntry';
                                     userEntry.textContent = JSON.parse(msg.data).user.username;
+                                    userEntry.id = `${JSON.parse(msg.data).user.id}entry`;
+                                    $(userEntry).css('width', '190px');
+                                    $(userEntry).on('click', (evt) => {
+                                        if (evt.target === userEntry && !evt.ctrlKey)
+                                        {
+                                            if (document.getElementById(`${JSON.parse(msg.data).user.id}info`) === null)
+                                            {
+                                                const card = retrieveCard(JSON.parse(msg.data).user.id).render();
+                                                card.setAttribute('style', `left: ${evt.clientX + 225 > window.innerWidth ? evt.clientX - 225 : evt.clientX + 25}px; top: ${evt.clientY + 25}px`);
+                                                document.body.appendChild(card);
+                                                $(document).on('mousemove', (evt) => {
+                                                    if (evt.target === userEntry)
+                                                    {
+                                                        card.setAttribute('style', `left: ${evt.clientX + 225 > window.innerWidth ? evt.clientX - 225 : evt.clientX + 25}px; top: ${evt.clientY + 25}px`);
+                                                    }
+                                                });
+                                                $(userEntry).one('mouseout', (evt) => {
+                                                    if (evt.target === userEntry)
+                                                    {
+                                                        document.body.removeChild(card);
+                                                        $(document).off('mousemove');
+                                                    }
+                                                });
+                                                $(userEntry).one('click', (evt) => {
+                                                    if (evt.target === userEntry && evt.ctrlKey)
+                                                    {
+                                                        $(document).off('mousemove');
+                                                        $(userEntry).off('mouseout');
+                                                        $(document).one('click', () => {
+                                                            document.body.removeChild(card);
+                                                        });
+                                                        evt.stopImmediatePropagation();
+                                                    }
+                                                });
+                                            }
+                                            else
+                                            {
+                                                document.body.removeChild(document.getElementById(`${JSON.parse(msg.data).user.id}info`));
+                                                $(document).off('mousemove');
+                                                $(userEntry).off('mouseout');
+                                            }
+                                        }
+                                    });
                                     tr.appendChild(userEntry);
                                     document.getElementById('userList').appendChild(tr);
                                     break;
                                 case ('disconnect'):
+                                    console.log('disconnect');
                                     removeUser(JSON.parse(msg.data).user.id);
                                     document.getElementById('userList').removeChild(document.getElementById(JSON.parse(msg.data).user.id));
                                     break;

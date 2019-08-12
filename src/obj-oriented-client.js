@@ -9,7 +9,7 @@ import $ from 'jquery';
  * @type {User}
  */
 export let thisUser;
-
+export let currentChannel;
 export const thisIcon = new Image();
 
 export function wipe()
@@ -44,9 +44,20 @@ export function wipe()
         $('<table id = "userList"></table>').appendTo(document.body);
         $('<table id = "channelList"></table>').appendTo(document.body);
         $('<tr><td class = "channelEntry selected">main</td></tr>').appendTo($('#channelList'));
-        $('<tr><td id = "addChannel">+</td></tr>').on('click', () => {
+        $('<tr id = "addChannelTR"><td id = "addChannel">+</td></tr>').on('click', () => {
             const newName = prompt('What would you like to name the new channel?', 'New Channel');
-            $(`<tr><td class = "channelEntry">${newName}</td></tr>`).insertBefore($('#addChannel'));
+            if (newName === null)
+            {
+                return;
+            }
+            $(`<tr><td class = "channelEntry">${newName}</td></tr>`).children().on('click', function(evt) {
+                if (evt.target === this)
+                {
+                    currentChannel = this.textContent;
+
+                    // $('')
+                }
+            }).insertBefore($('#addChannelTR'));
         }).appendTo('#channelList');
     
         $(document).off('keydown');

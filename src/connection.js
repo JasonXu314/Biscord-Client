@@ -51,7 +51,7 @@ export default class Connection
         /** @type {User | null} */
         let user = null;
         return new Promise((resolve, reject) => {
-            connection = new WebSocket('ws://localhost:3000');
+            connection = new WebSocket('wss://192.168.2.19:3000');
             connection.addEventListener('open', () => {
                 connection.send(JSON.stringify({
                     type: 'registration',
@@ -107,7 +107,7 @@ export default class Connection
                                             username: JSON.parse(msg.data).message.author.username,
                                             id: JSON.parse(msg.data).message.author.id,
                                             icon: JSON.parse(msg.data).message.author.icon
-                                        }, JSON.parse(msg.data).message.id, JSON.parse(msg.data).message.edits);
+                                        }, JSON.parse(msg.data).message.id, JSON.parse(msg.data).message.edits, JSON.parse(msg.data).message.channel);
                                         $(message.render()).insertBefore($('#inputRow'));
                                         addMessage(message);
                                     }

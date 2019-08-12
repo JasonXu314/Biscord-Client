@@ -46,8 +46,7 @@ export default class User
     /**
      * Checks the credentials against this user
      * @param {UserCredentials} creds 
-     * @returns true if and only if the credentials match
-     * @type {boolean}
+     * @returns {boolean} true if and only if the credentials match
      */
     check(creds)
     {

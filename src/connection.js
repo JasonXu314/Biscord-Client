@@ -51,7 +51,7 @@ export default class Connection
         /** @type {User | null} */
         let user = null;
         return new Promise((resolve, reject) => {
-            connection = new WebSocket('wss://192.168.2.19:3000');
+            connection = new WebSocket('wss://biscord-server.herokuapp.com:18322');
             connection.addEventListener('open', () => {
                 connection.send(JSON.stringify({
                     type: 'registration',
@@ -60,7 +60,6 @@ export default class Connection
                 connection.addEventListener('message', (msg) => {
                     if (JSON.parse(msg.data).type === 'rejection')
                     {
-                        console.log('hi');
                         $(document.body.children).remove();
                         let h3 = document.createElement('h3');
                         h3.textContent = 'Please enter a username';

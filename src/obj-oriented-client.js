@@ -75,28 +75,28 @@ window.addEventListener('load', () => {
 
     const editDiv = document.getElementById('inputDiv');
 
-    $(editDiv).on('dragenter', (evt) =>{
-        evt.preventDefault();
-        evt.stopPropagation();
-
-        editDiv.style.backgroundColor = 'crimson';
-    });
-
-    $(editDiv).on('dragover', (evt) => {
-        evt.preventDefault();
-        evt.stopPropagation();
-
-        editDiv.style.backgroundColor = 'crimson';
-    });
-
-    $(editDiv).on('dragleave', (evt) => {
+    $(editDiv).on('dragenter', (evt) => {
         evt.preventDefault();
         evt.stopPropagation();
 
         editDiv.style.backgroundColor = 'seagreen';
     });
 
-    $(editDiv).on('drop', (evt) => {
+    $(editDiv).on('dragover', (evt) => {
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        editDiv.style.backgroundColor = 'seagreen';
+    });
+
+    $(editDiv).on('dragleave', (evt) => {
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        editDiv.style.backgroundColor = 'crimson';
+    });
+
+    $(editDiv).one('drop', (evt) => {
         evt.preventDefault();
         evt.stopPropagation();
 

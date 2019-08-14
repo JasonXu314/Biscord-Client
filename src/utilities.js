@@ -66,6 +66,43 @@ export function retrieveUserByName(name)
 }
 
 /**
+ * Fetches all messages belonging to a channel
+ * @param {string} channel the channel the messages should belong to
+ * @returns {Message[]} the messages belonging to channel
+ */
+export function fetchMessagesByChannel(channel)
+{
+    const out = [];
+    for (let message of messageCache.values())
+    {
+        if (message.channel === channel)
+        {
+            out.push(message);
+        }
+    }
+    return out;
+}
+
+/**
+ * Fetches the latest message of the given user
+ * @param {User} user the user whose message is to be fetched
+ */
+export function fetchUserLatestMessage(user)
+{
+    for (let message of messageCache.values())
+    {
+        if(message.author.check({
+            id: user.id,
+            username: user.username
+        }))
+        {
+            return message;
+        }
+    }
+    return null;
+}
+
+/**
  * Adds a message to this client's internal cache of messages
  * @param {Message} message the message to add to the internal cache
  */

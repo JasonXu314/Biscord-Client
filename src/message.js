@@ -120,10 +120,11 @@ export default class Message {
      * @param {UserShell} sender the user sending the message
      * @param {number} id the UUID of the message
      * @param {string[]} edits the edit history of the message
+     * @param {string} channel the channel the history belongs to
      */
-    static CreateMessage(message, sender, id, edits)
+    static CreateMessage(message, sender, id, edits, channel)
     {
-        const newMsg = new Message(message, User.DummyUser(sender.username, sender.id, sender.icon.src));
+        const newMsg = new Message(message, User.DummyUser(sender.username, sender.id, sender.icon.src), channel);
         newMsg.id = id;
         newMsg.element.id = id;
         newMsg.edits = edits;

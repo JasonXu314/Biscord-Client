@@ -32,8 +32,11 @@ export default class InfoCard
         text.textContent = this.user.username;
         this.element.appendChild(document.createElement('br'));
         this.element.appendChild(document.createElement('br'));
-        this.element.appendChild(document.createElement('br'));
         this.element.appendChild(text);
+        const id = document.createElement('p');
+        id.textContent = `<@${this.user.id}>`;
+        id.style = 'text-align: center; font-weight: bold;';
+        this.element.appendChild(id);
     }
 
     render()

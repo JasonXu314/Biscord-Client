@@ -5,7 +5,7 @@
   "main": "webpack.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack; cd dist; git add .; git commit -m \"Client\"; git push heroku master; cd .."
+    "build": "webpack"
   },
   "keywords": [],
   "author": "",

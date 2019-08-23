@@ -2,6 +2,7 @@ import User from './user';
 import Message from './message';
 import $ from 'jquery';
 import InfoCard from './infoCard';
+import { currentChannel } from './obj-oriented-client';
 
 /**
  * Internal record of users (used in mention parsing)
@@ -22,6 +23,20 @@ const cardMap = new Map();
 const messageCache = new Map();
 
 /**
+ * Dictionary of emotes
+ */
+const emoteDict = {
+    ':b:': '🅱️',
+    ':smile:': '🙂',
+    ':)': '🙂',
+    ':smile_open_mouth:': '😃',
+    ':D': '😃',
+    ':smile_eyes:': '😄',
+    '^_^': '😄',
+    ':asian:': '😐'
+}
+
+/**
  * Adds a user to this client's internal record of users
  * @param {User} user the user to be added to the map
  */
@@ -30,6 +45,12 @@ export function addUser(user)
     userMap.set(user.id, user);
     cardMap.set(user.id, new InfoCard(user));
 }
+
+/**
+ * The channels used by this client
+ * @type {string[]}
+ */
+const channels = ['main'];
 
 /**
  * Removes a user from this client's internal record of users
@@ -66,7 +87,7 @@ export function retrieveUserByName(name)
 }
 
 /**
- * Fetches all messages belonging to a channel
+ * Fetches all messages belonging to a channel, in chronological order
  * @param {string} channel the channel the messages should belong to
  * @returns {Message[]} the messages belonging to channel
  */
@@ -89,17 +110,18 @@ export function fetchMessagesByChannel(channel)
  */
 export function fetchUserLatestMessage(user)
 {
+    let returnMsg = null;
     for (let message of messageCache.values())
     {
         if(message.author.check({
             id: user.id,
             username: user.username
-        }))
+        }) && message.channel === currentChannel)
         {
-            return message;
+            returnMsg = message;
         }
     }
-    return null;
+    return returnMsg;
 }
 
 /**
@@ -136,6 +158,38 @@ export function retrieveCard(id)
 export function removeMessage(id)
 {
     messageCache.delete(typeof id === 'number' ? id : parseInt(id));
+}
+
+/**
+ * Adds a channel to the internal cache of channels
+ * @param {string} name the name of the channel
+ */
+export function addChannel(name)
+{
+    channels.push(name);
+}
+
+/**
+ * Determines whether the channel exists already or not
+ * @param {string} name the name of the channel
+ */
+export function hasChannel(name)
+{
+    return channels.includes(name);
+}
+
+/**
+ * Exchanges all the emotes in the given string for the actual emojis, as defined by emoteDict
+ * @param {string} str the string to be swept for emotes
+ */
+export function prepEmotes(str)
+{
+    let out = str;
+    for (let prop in emoteDict)
+    {
+        out = out.replace(prop, emoteDict[prop]);
+    }
+    return out;
 }
 
 export const windowBehavior = (evt) => {

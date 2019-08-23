@@ -6,8 +6,10 @@ import {
 import {
     innerBehavior,
     retrieveUserByID,
-    retrieveUserByName
+    retrieveUserByName,
+    prepEmotes
 } from './utilities.js';
+import $ from 'jquery';
 
 export default class Message {
     /**
@@ -28,7 +30,7 @@ export default class Message {
          * Converts all mentions to the username of the respective User
          * @type {string}
          */
-        this.messageDisplay = message.replace(/<@(?:\d){13}>/g, (substring) => `@${retrieveUserByID(parseInt(substring.slice(2, -1))).username}`);
+        this.messageDisplay = prepEmotes(message.replace(/<@(?:\d){13}>/g, (substring) => `@${retrieveUserByID(parseInt(substring.slice(2, -1))).username}`));
 
         /**
          * The sender of this Message
@@ -93,8 +95,10 @@ export default class Message {
                 }, { once: true });
             }
         }
-        this.msg.addEventListener('auxclick', (evt) => {
-            if (evt.target === this.msg) {
+        this.element.addEventListener('auxclick', (evt) => {
+            console.log(evt);
+            if (evt.target === this.msg)
+            {
                 window.addEventListener('contextmenu', (evt) => evt.preventDefault(), {
                     once: true
                 });
@@ -104,14 +108,17 @@ export default class Message {
                 }, false);
             }
         });
-        this.msg.addEventListener('click', (evt) => {
-            if (evt.target === this.msg) {
+        this.element.addEventListener('click', (evt) => {
+            console.log(evt);
+            if (evt.target === this.msg)
+            {
                 this.edit({
                     username: thisUser.username,
                     id: thisUser.id
                 });
             }
         });
+        this.prepLinks();
     }
 
     /**
@@ -165,7 +172,8 @@ export default class Message {
      * Function to render the message onto the DOM
      * @returns a DOM Element containing the message
      */
-    render() {
+    render()
+    {
         return this.element;
     }
 
@@ -211,7 +219,17 @@ export default class Message {
 
                         if (newMsgDisplay.length === 0)
                         {
-                            this.delete(thisUser.creds, false);
+                            this.delete({
+                                username: thisUser.username,
+                                id: thisUser.id
+                            }, false);
+                            $('#input').get(0).focus();
+                            return;
+                        }
+
+                        if (newMsgDisplay === this.messageDisplay)
+                        {
+                            this.element.replaceChild(this.msg, editor);
                             return;
                         }
 
@@ -227,6 +245,7 @@ export default class Message {
                                 id: this.author.id
                             }
                         });
+                        document.getElementById('input').focus();
 
                         this.edits.push(this.messageDisplay);
                         this.messageRaw = newMsgRaw;
@@ -234,12 +253,14 @@ export default class Message {
                         this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
                         this.refreshMentions();
                         this.element.replaceChild(this.msg, editor);
+                        this.prepLinks();
 
                         if (this.edits.length === 1)
                         {
                             const sub = document.createElement('sub');
                             sub.textContent = 'edited (1)';
                             sub.id = `${this.id}sub`;
+                            sub.classList.add('editSub');
                             sub.addEventListener('mouseover', (evt) => {
                                 let display = document.createElement('div');
                                 display.id = 'editDiv';
@@ -292,11 +313,14 @@ export default class Message {
                             document.removeEventListener('keydown', behavior);
                             document.removeEventListener('keydown', escBehavior);
                         }
+                        document.getElementById('input').focus();
                     }
                 };
                 document.addEventListener('keydown', escBehavior);
                 this.element.replaceChild(editor, this.msg);
                 editor.focus();
+                editor.value = this.messageDisplay;
+                setTimeout(() => editor.setSelectionRange(this.messageDisplay.length * 2, this.messageDisplay.length * 2), 0);
             }
             else
             {
@@ -311,6 +335,7 @@ export default class Message {
                 const sub = document.createElement('sub');
                 sub.textContent = 'edited (1)';
                 sub.id = `${this.id}sub`;
+                sub.classList.add('editSub');
                 sub.addEventListener('mouseover', (evt) => {
                     let display = document.createElement('div');
                     display.id = 'editDiv';
@@ -345,6 +370,7 @@ export default class Message {
             this.messageDisplay = newMsg.replace(/<@(?:\d){13}>/g, (substring) => `@${retrieveUserByID(parseInt(substring.slice(2, -1))).username}`);
             this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
             this.refreshMentions();
+            this.prepLinks();
         }
     }
 
@@ -373,5 +399,17 @@ export default class Message {
             this.msg.classList.remove('mention');
             document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 <= 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
         }
+    }
+
+    /**
+     * Replaces any links detected in the message with actual anchor elements
+     */
+    prepLinks()
+    {
+        let htmlString = `<td class = "message">${this.author.username}: ${this.messageDisplay.replace(/https?:\/\/[-a-zA-Z0-9_=?#.]+/, (str) => `<a href = "${str}" target = "_blank">${str}</a>`)}</td>`;
+
+        $(this.element).empty();
+        this.msg = $(htmlString).get(0);
+        $(this.element).append(this.msg);
     }
 }

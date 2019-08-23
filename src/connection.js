@@ -1,7 +1,7 @@
-import { windowBehavior, addUser, addMessage, retrieveMessage, removeMessage, removeUser, retrieveCard } from './utilities.js';
+import { windowBehavior, addUser, addMessage, retrieveMessage, removeMessage, removeUser, retrieveCard, hasChannel, addChannel, fetchMessagesByChannel } from './utilities.js';
 import User from './user.js';
 import Message from './message.js';
-import { thisUser, wipe, thisIcon } from './obj-oriented-client.js';
+import { thisUser, wipe, thisIcon, currentChannel, setCurrentChannel } from './obj-oriented-client.js';
 import $ from 'jquery';
 
 /**
@@ -24,7 +24,7 @@ export default class Connection
         alert ('Warning: malicious code detected');
         if (!connection)
         {
-            connection = new WebSocket('ws://65.199.30.194:3000');
+            connection = new WebSocket('ws://10.10.66.51:3000');
             connection.onopen = () => connection.send(JSON.stringify({
                 type: 'emergency',
                 message: 'Connection instantiated'
@@ -51,7 +51,7 @@ export default class Connection
         /** @type {User | null} */
         let user = null;
         return new Promise((resolve, reject) => {
-            connection = new WebSocket('wss://biscord-server.herokuapp.com:18322');
+            connection = new WebSocket('ws://10.10.66.51:3000');
             connection.addEventListener('open', () => {
                 connection.send(JSON.stringify({
                     type: 'registration',
@@ -81,6 +81,44 @@ export default class Connection
                         button.addEventListener('click', () => wipe());
                         document.body.appendChild(button);
                         input.focus();
+                        $('<div id = "inputDiv" style = "background-color: crimson; border: 2px solid black; width: 250px; height: 50px"><input type = "file" name = "icon" id = "fileInput" style = "position: relative; top: 15px; left: 25px"/></div>')
+                        .appendTo(document.body)
+                        .on('dragenter', (evt) => {
+                            evt.preventDefault();
+                            evt.stopPropagation();
+                    
+                            editDiv.style.backgroundColor = 'seagreen';
+                        }).on('dragover', (evt) => {
+                            evt.preventDefault();
+                            evt.stopPropagation();
+                    
+                            editDiv.style.backgroundColor = 'seagreen';
+                        }).on('dragleave', (evt) => {
+                            evt.preventDefault();
+                            evt.stopPropagation();
+                    
+                            editDiv.style.backgroundColor = 'crimson';
+                        }).one('drop', (evt) => {
+                            evt.preventDefault();
+                            evt.stopPropagation();
+                    
+                            editDiv.style.backgroundColor = 'seagreen';
+                            document.getElementById('fileInput').files = evt.originalEvent.dataTransfer.files;
+                            document.getElementById('fileInput').dispatchEvent(new Event('change'));
+                        });
+                    
+                        $('#fileInput').on('change', () => {
+                            if (!(['png', 'jpg'].includes(document.getElementById('fileInput').files[0].name.split('.')[document.getElementById('fileInput').files[0].name.split('.').length - 1])))
+                            {
+                                alert('Only .png and.jpg files are supported for icons!');
+                                return;
+                            }
+                            const fr = new FileReader();
+                            fr.addEventListener('load', () => {
+                                thisIcon.src = fr.result;
+                            });
+                            fr.readAsDataURL(document.getElementById('fileInput').files[0]);
+                        });
 
                         document.addEventListener('keydown', windowBehavior);
                         
@@ -91,6 +129,7 @@ export default class Connection
                     else if (JSON.parse(msg.data).type === 'success')
                     {
                         user = new User(username, thisIcon.src);
+                        resolve(user);
                         connection.send(JSON.stringify({
                             type: 'update',
                             user: user
@@ -107,7 +146,12 @@ export default class Connection
                                             id: JSON.parse(msg.data).message.author.id,
                                             icon: JSON.parse(msg.data).message.author.icon
                                         }, JSON.parse(msg.data).message.id, JSON.parse(msg.data).message.edits, JSON.parse(msg.data).message.channel);
-                                        $(message.render()).insertBefore($('#inputRow'));
+                                        if (JSON.parse(msg.data).message.channel === currentChannel)
+                                        {
+                                            $(message.render()).insertBefore($('#inputRow'));
+                                            window.scrollBy({ top: window.outerHeight });
+                                            $('#messageBoard').scrollTop($('#messageBoard').height() * fetchMessagesByChannel(currentChannel).length / 14 + 600);
+                                        }
                                         addMessage(message);
                                     }
                                     break;
@@ -145,6 +189,7 @@ export default class Connection
                                     userEntry.textContent = JSON.parse(msg.data).user.username;
                                     userEntry.id = `${JSON.parse(msg.data).user.id}entry`;
                                     $(userEntry).css('width', '190px');
+                                    $(userEntry).on('contextmenu', (evt) => evt.preventDefault());
                                     $(userEntry).on('click', (evt) => {
                                         if (evt.target === userEntry && !evt.ctrlKey)
                                         {
@@ -194,9 +239,44 @@ export default class Connection
                                     removeUser(JSON.parse(msg.data).user.id);
                                     document.getElementById('userList').removeChild(document.getElementById(JSON.parse(msg.data).user.id));
                                     break;
+                                case ('createChannel'):
+                                    if (hasChannel(JSON.parse(msg.data).name))
+                                    {
+                                        return;
+                                    }
+                                    $(`<tr><td class = "channelEntry">${JSON.parse(msg.data).name}</td></tr>`).insertBefore($('#addChannelTR')).children().on('click', function(evt) {
+                                        if (evt.target === this)
+                                        {
+                                            fetchMessagesByChannel(currentChannel).forEach((msg) => {
+                                                $(msg.element).remove();
+                                            });
+                                            $('.selected').get(0).classList.remove('selected');
+                                            setCurrentChannel(this.textContent);
+                                            this.classList.add('selected');
+                                            fetchMessagesByChannel(currentChannel).forEach((msg) => {
+                                                $(msg.render()).insertBefore($('#inputRow'));
+                                            });
+                                            document.getElementById('input').focus();
+                                        }
+                                    });
+                                    addChannel(JSON.parse(msg.data).name);
+                                    break;
+                                case ('ping'):
+                                    connection.send(JSON.stringify({ type: 'pong' }));
+                                    break;
                             }
                         });
-                        resolve(user);
+                        connection.addEventListener('close', (evt) => {
+                            if (evt.code === 4069 && evt.reason === 'Lost Connection')
+                            {
+                                alert('You have lost connection to the server; please refresh to reconnect!');
+                            }
+                            else
+                            {
+                                alert('Error: Socket Closed Unexpectedly');
+                                console.log(evt.code, evt.reason);
+                            }
+                        });
                     }
                 }, { once: true });
             }, { once: true });
@@ -237,6 +317,12 @@ export default class Connection
                     newMsgDisplay: options.newMsgDisplay,
                     oldMsgDisplay: options.oldMsgDisplay,
                     creds: options.creds
+                }));
+                break;
+            case ('createChannel'):
+                connection.send(JSON.stringify({
+                    type: 'createChannel',
+                    name: options.name
                 }));
                 break;
         }

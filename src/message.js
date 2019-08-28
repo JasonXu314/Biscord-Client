@@ -76,6 +76,7 @@ export default class Message {
         this.attachments = attachments || [];
         if (!attachments)
         {
+            console.log('hi');
             for (let file of $('#fileInput').get(0).files)
             {
                 const fr = new FileReader();
@@ -136,6 +137,7 @@ export default class Message {
                 });
             }
         });
+        console.log(this.attachments);
         if (this.attachments.length !== 0)
         {
             console.log('hi');

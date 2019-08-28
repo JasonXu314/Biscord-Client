@@ -1,4 +1,4 @@
-import { windowBehavior, addUser, addMessage, retrieveMessage, removeMessage, removeUser, retrieveCard, hasChannel, addChannel, fetchMessagesByChannel } from './utilities.js';
+import { windowBehavior, addUser, addMessage, retrieveMessage, removeMessage, removeUser, retrieveCard, hasChannel, addChannel, fetchMessagesByChannel, retrieveUserByID, ownsChannel, deleteChannel, editChannel } from './utilities.js';
 import User from './user.js';
 import Message from './message.js';
 import { thisUser, wipe, thisIcon, currentChannel, setCurrentChannel } from './obj-oriented-client.js';
@@ -141,11 +141,7 @@ export default class Connection
                                     if (JSON.parse(msg.data).message.author.id !== thisUser.id)
                                     {
                                         console.log('message');
-                                        let message = Message.CreateMessage(JSON.parse(msg.data).message.messageRaw, {
-                                            username: JSON.parse(msg.data).message.author.username,
-                                            id: JSON.parse(msg.data).message.author.id,
-                                            icon: JSON.parse(msg.data).message.author.icon
-                                        }, JSON.parse(msg.data).message.id, JSON.parse(msg.data).message.edits, JSON.parse(msg.data).message.channel);
+                                        let message = Message.CreateMessage(JSON.parse(msg.data).message.messageRaw, retrieveUserByID(JSON.parse(msg.data).message.author.id), JSON.parse(msg.data).message.id, JSON.parse(msg.data).message.edits, JSON.parse(msg.data).message.channel, JSON.parse(msg.data).message.attachments);
                                         if (JSON.parse(msg.data).message.channel === currentChannel)
                                         {
                                             $(message.render()).insertBefore($('#inputRow'));
@@ -178,59 +174,61 @@ export default class Connection
                                 case ('join'):
                                     console.log('join');
                                     addUser(User.DummyUser(JSON.parse(msg.data).user.username, JSON.parse(msg.data).user.id, JSON.parse(msg.data).user.icon.src));
+                                    if (JSON.parse(msg.data).user.id === 0 || JSON.parse(msg.data).user.id === 1) return;
                                     const tr = document.createElement('tr');
                                     tr.id = JSON.parse(msg.data).user.id;
                                     const icon = new Image(50, 50);
                                     icon.src = JSON.parse(msg.data).user.icon.src;
-                                    $(icon).css('border', '3px solid black');
+                                    $(icon).css('border', '3px solid black')
+                                        .css('border-radius', '28px');
                                     icon.onload = () => tr.prepend(icon);
                                     const userEntry = document.createElement('td');
                                     userEntry.className = 'userEntry';
-                                    userEntry.textContent = JSON.parse(msg.data).user.username;
                                     userEntry.id = `${JSON.parse(msg.data).user.id}entry`;
-                                    $(userEntry).css('width', '190px');
-                                    $(userEntry).on('contextmenu', (evt) => evt.preventDefault());
-                                    $(userEntry).on('click', (evt) => {
-                                        if (evt.target === userEntry && !evt.ctrlKey)
-                                        {
-                                            if (document.getElementById(`${JSON.parse(msg.data).user.id}info`) === null)
+                                    $(userEntry).css('width', '190px')
+                                        .text(JSON.parse(msg.data).user.username)
+                                        .on('contextmenu', (evt) => evt.preventDefault())
+                                        .on('click', (evt) => {
+                                            if (evt.target === userEntry && !evt.ctrlKey)
                                             {
-                                                const card = retrieveCard(JSON.parse(msg.data).user.id).render();
-                                                card.setAttribute('style', `left: ${evt.clientX + 225 > window.innerWidth ? evt.clientX - 225 : evt.clientX + 25}px; top: ${evt.clientY + 25}px`);
-                                                document.body.appendChild(card);
-                                                $(document).on('mousemove', (evt) => {
-                                                    if (evt.target === userEntry)
-                                                    {
-                                                        card.setAttribute('style', `left: ${evt.clientX + 225 > window.innerWidth ? evt.clientX - 225 : evt.clientX + 25}px; top: ${evt.clientY + 25}px`);
-                                                    }
-                                                });
-                                                $(userEntry).one('mouseout', (evt) => {
-                                                    if (evt.target === userEntry)
-                                                    {
-                                                        document.body.removeChild(card);
-                                                        $(document).off('mousemove');
-                                                    }
-                                                });
-                                                $(userEntry).one('click', (evt) => {
-                                                    if (evt.target === userEntry && evt.ctrlKey)
-                                                    {
-                                                        $(document).off('mousemove');
-                                                        $(userEntry).off('mouseout');
-                                                        $(document).one('click', () => {
+                                                if (document.getElementById(`${JSON.parse(msg.data).user.id}info`) === null)
+                                                {
+                                                    const card = retrieveCard(JSON.parse(msg.data).user.id).render();
+                                                    card.setAttribute('style', `left: ${evt.clientX + 225 > window.innerWidth ? evt.clientX - 225 : evt.clientX + 25}px; top: ${evt.clientY + 25}px`);
+                                                    document.body.appendChild(card);
+                                                    $(document).on('mousemove', (evt) => {
+                                                        if (evt.target === userEntry)
+                                                        {
+                                                            card.setAttribute('style', `left: ${evt.clientX + 225 > window.innerWidth ? evt.clientX - 225 : evt.clientX + 25}px; top: ${evt.clientY + 25}px`);
+                                                        }
+                                                    });
+                                                    $(userEntry).one('mouseout', (evt) => {
+                                                        if (evt.target === userEntry)
+                                                        {
                                                             document.body.removeChild(card);
-                                                        });
-                                                        evt.stopImmediatePropagation();
-                                                    }
-                                                });
+                                                            $(document).off('mousemove');
+                                                        }
+                                                    });
+                                                    $(userEntry).one('click', (evt) => {
+                                                        if (evt.target === userEntry && evt.ctrlKey)
+                                                        {
+                                                            $(document).off('mousemove');
+                                                            $(userEntry).off('mouseout');
+                                                            $(document).one('click', () => {
+                                                                document.body.removeChild(card);
+                                                            });
+                                                            evt.stopImmediatePropagation();
+                                                        }
+                                                    });
+                                                }
+                                                else
+                                                {
+                                                    document.body.removeChild(document.getElementById(`${JSON.parse(msg.data).user.id}info`));
+                                                    $(document).off('mousemove');
+                                                    $(userEntry).off('mouseout');
+                                                }
                                             }
-                                            else
-                                            {
-                                                document.body.removeChild(document.getElementById(`${JSON.parse(msg.data).user.id}info`));
-                                                $(document).off('mousemove');
-                                                $(userEntry).off('mouseout');
-                                            }
-                                        }
-                                    });
+                                        });
                                     tr.appendChild(userEntry);
                                     document.getElementById('userList').appendChild(tr);
                                     break;
@@ -244,22 +242,164 @@ export default class Connection
                                     {
                                         return;
                                     }
-                                    $(`<tr><td class = "channelEntry">${JSON.parse(msg.data).name}</td></tr>`).insertBefore($('#addChannelTR')).children().on('click', function(evt) {
-                                        if (evt.target === this)
-                                        {
-                                            fetchMessagesByChannel(currentChannel).forEach((msg) => {
-                                                $(msg.element).remove();
-                                            });
-                                            $('.selected').get(0).classList.remove('selected');
-                                            setCurrentChannel(this.textContent);
-                                            this.classList.add('selected');
-                                            fetchMessagesByChannel(currentChannel).forEach((msg) => {
-                                                $(msg.render()).insertBefore($('#inputRow'));
-                                            });
-                                            document.getElementById('input').focus();
-                                        }
-                                    });
-                                    addChannel(JSON.parse(msg.data).name);
+                                    $(`<tr id = "channel${JSON.parse(msg.data).name.replace(' ', '_')}"><td class = "channelEntry">${JSON.parse(msg.data).name}</td></tr>`).insertBefore($('#addChannelTR'))
+                                        .children().on('mouseenter', function(evt) {
+                                            let fadeInID;
+                                            let fadeOutID;
+                                            if (evt.target === this && !$(this).siblings().hasClass('optionsDiv'))
+                                            {
+                                                let onMenu = false;
+                                                const optionsDiv = $('<div class = "optionsDiv">⋮</div>')
+                                                    .css('height', '18px')
+                                                    .css('width', '15px')
+                                                    .css('top', `${$(this).parent().position().top + ($(this).parent().height() - $(this).height())/2 - 6}px`)
+                                                    .css('left', `${$(this).parent().position().left + $(this).parent().width() - 37}px`)
+                                                    .css('opacity', 0)
+                                                    .on('mouseenter', function(evt) {
+                                                        if (evt.target === this)
+                                                        {
+                                                            onMenu = true;
+                                                        }
+                                                    })
+                                                    .on('mouseout', function(evt) {
+                                                        if (evt.target === this)
+                                                        {
+                                                            onMenu = false;
+                                                            if ($(this).children().hasClass('optionsTable'))
+                                                            {
+                                                                if (!($(this).siblings().is($(evt.relatedTarget)) || $(this).children().is(evt.relatedTarget)))
+                                                                {
+                                                                    $(this).siblings().mouseout();
+                                                                }
+                                                            }
+                                                            else if (!$(this).siblings().is($(evt.relatedTarget)))
+                                                            {
+                                                                $(this).siblings().mouseout();
+                                                            }
+                                                        }
+                                                    })
+                                                    .on('click', function expand(evt) {
+                                                        if (evt.target === this)
+                                                        {
+                                                            $(this)
+                                                                .css('height', '')
+                                                                .css('width', '')
+                                                                .append($('<table class = "optionsTable"></table>')
+                                                                    .append($('<tr><td class = "channelOption">Delete</td></tr>').children()
+                                                                        .on('click', () => {
+                                                                            const thisChannel = $(this).siblings().text();
+                                                                            if (!ownsChannel(thisChannel))
+                                                                            {
+                                                                                alert("Please do not try to delete other peoples' channels!");
+                                                                                return;
+                                                                            }
+                                                                            deleteChannel(thisChannel);
+                                                                            Connection.request('deleteChannel', {
+                                                                                name: thisChannel
+                                                                            });
+                                                                            $(this).parent().off().remove();
+                                                                        }).parent())
+                                                                    .append($('<tr><td class = "channelOption">Edit</td></tr>').children()
+                                                                        .on('click', () => {
+                                                                            const thisChannel = $(this).siblings().text();
+                                                                            if (!ownsChannel(thisChannel))
+                                                                            {
+                                                                                alert("Please do not try to delete other peoples' channels!");
+                                                                                return;
+                                                                            }
+                                                                            const newName = prompt('What would you like to name the new channel?', $(this).siblings().text());
+                                                                            if (newName === null)
+                                                                            {
+                                                                                return;
+                                                                            }
+                                                                            if (newName.trim().length === 0)
+                                                                            {
+                                                                                alert('Please enter a name for the channel!');
+                                                                                return;
+                                                                            }
+                                                                            editChannel(thisChannel, newName);
+                                                                            $(this).siblings().text(newName);
+                                                                            Connection.request('editChannel', {
+                                                                                name: thisChannel,
+                                                                                newName: newName
+                                                                            });
+                                                                            $(this).siblings().mouseout();
+                                                                        }).parent()))
+                                                                    .off('click', expand);
+                                                        }
+                                                    })
+                                                    .appendTo($(this).parent());
+                                                fadeInID = setInterval(() => {
+                                                    optionsDiv.css('opacity', `${parseFloat(optionsDiv.css('opacity')) + 0.01}`);
+                                                    if (parseFloat(optionsDiv.css('opacity')) === 1)
+                                                    {
+                                                        clearInterval(fadeInID);
+                                                    }
+                                                }, 5);
+                                                $(this).on('mouseout', function mouseOutBehavior(evt) {
+                                                    if (evt.target === this)
+                                                    {
+                                                        setTimeout(() => {
+                                                            if (!onMenu)
+                                                            {
+                                                                fadeOutID = setInterval(() => {
+                                                                    clearInterval(fadeInID);
+                                                                    optionsDiv.css('opacity', `${parseFloat(optionsDiv.css('opacity')) - 0.01}`);
+                                                                    if (parseFloat(optionsDiv.css('opacity')) === 0)
+                                                                    {
+                                                                        clearInterval(fadeOutID);
+                                                                        optionsDiv.remove();
+                                                                        $(this).off('mouseout', mouseOutBehavior);
+                                                                    }
+                                                                }, 5);
+                                                            }
+                                                        }, 5);
+                                                    }
+                                                });
+                                            }
+                                            else
+                                            {
+                                                clearInterval(fadeOutID);
+                                                const optionsDiv = $(this).children().has('.optionsDiv');
+                                                fadeInID = setInterval(() => {
+                                                    optionsDiv.css('opacity', `${parseFloat(optionsDiv.css('opacity')) + 0.01}`);
+                                                    if (parseFloat(optionsDiv.css('opacity')) === 1)
+                                                    {
+                                                        clearInterval(fadeInID);
+                                                    }
+                                                }, 5);
+                                            }
+                                        })
+                                        .on('click', function(evt) {
+                                            if (evt.target === this)
+                                            {
+                                                fetchMessagesByChannel(currentChannel).forEach((msg) => {
+                                                    $(msg.element).remove();
+                                                });
+                                                $('.selected').removeClass('selected');
+                                                setCurrentChannel(this.textContent);
+                                                this.classList.add('selected');
+                                                fetchMessagesByChannel(currentChannel).forEach((msg) => {
+                                                    $(msg.render()).insertBefore($('#inputRow'));
+                                                });
+                                                document.getElementById('input').focus();
+                                            }
+                                        });
+                                    if (addChannel(JSON.parse(msg.data).name, retrieveUserByID(JSON.parse(msg.data).user.id)) === 1)
+                                    {
+                                        $('.channelEntry').addClass('selected');
+                                        setCurrentChannel('main');
+                                    }
+                                    break;
+                                case ('deleteChannel'):
+                                    console.log('channelDelete');
+                                    deleteChannel(JSON.parse(msg.data).name);
+                                    $(`#channel${JSON.parse(msg.data).name.replace(' ', '_')}`).off().remove();
+                                    break;
+                                case ('editChannel'):
+                                    console.log('channelEdit');
+                                    editChannel(JSON.parse(msg.data).name, JSON.parse(msg.data).newName);
+                                    $(`#channel${JSON.parse(msg.data).name.replace(' ', '_')}`).children('td').text(JSON.parse(msg.data).newName);
                                     break;
                                 case ('ping'):
                                     connection.send(JSON.stringify({ type: 'pong' }));
@@ -322,7 +462,21 @@ export default class Connection
             case ('createChannel'):
                 connection.send(JSON.stringify({
                     type: 'createChannel',
+                    name: options.name,
+                    user: thisUser
+                }));
+                break;
+            case ('deleteChannel'):
+                connection.send(JSON.stringify({
+                    type: 'deleteChannel',
                     name: options.name
+                }));
+                break;
+            case ('editChannel'):
+                connection.send(JSON.stringify({
+                    type: 'editChannel',
+                    name: options.name,
+                    newName: options.newName
                 }));
                 break;
         }

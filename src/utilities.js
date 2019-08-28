@@ -2,13 +2,19 @@ import User from './user';
 import Message from './message';
 import $ from 'jquery';
 import InfoCard from './infoCard';
-import { currentChannel } from './obj-oriented-client';
+import { currentChannel, thisUser } from './obj-oriented-client';
 
 /**
  * Internal record of users (used in mention parsing)
  * @type {Map<number, User>}
  */
 const userMap = new Map();
+
+/**
+ * Internal record of users that have left (used in history parsing)
+ * @type {Map<number, User>}
+ */
+const pastUsers = new Map();
 
 /**
  * Internal record of infoCards, speeds up delivery of information and prevents memory wasting
@@ -37,6 +43,12 @@ const emoteDict = {
 }
 
 /**
+ * The channels used by this client
+ * @type {Map<User, string[]>}
+ */
+const channels = new Map();
+
+/**
  * Adds a user to this client's internal record of users
  * @param {User} user the user to be added to the map
  */
@@ -47,17 +59,12 @@ export function addUser(user)
 }
 
 /**
- * The channels used by this client
- * @type {string[]}
- */
-const channels = ['main'];
-
-/**
  * Removes a user from this client's internal record of users
  * @param {number | string} id the UUID of the user to be removed from the map
  */
 export function removeUser(id)
 {
+    pastUsers.set(typeof id === 'number' ? id : parseInt(id), pastUsers.get(typeof id === 'number' ? id : parseInt(id)));
     userMap.delete(typeof id === 'number' ? id : parseInt(id));
     cardMap.delete(typeof id === 'number' ? id : parseInt(id));
 }
@@ -68,7 +75,7 @@ export function removeUser(id)
  */
 export function retrieveUserByID(id)
 {
-    return userMap.get(typeof id === 'number' ? id : parseInt(id));
+    return userMap.get(typeof id === 'number' ? id : parseInt(id)) || pastUsers.get(typeof id === 'number' ? id : parseInt(id));
 }
 
 /**
@@ -163,10 +170,72 @@ export function removeMessage(id)
 /**
  * Adds a channel to the internal cache of channels
  * @param {string} name the name of the channel
+ * @param {User} user the user creating the channel
  */
-export function addChannel(name)
+export function addChannel(name, user = undefined)
 {
-    channels.push(name);
+    if (channels.get(user || thisUser))
+    {
+        channels.get(user || thisUser).push(name);
+    }
+    else
+    {
+        channels.set(user || thisUser, [name]);
+    }
+    return channels.size;
+}
+
+/**
+ * Effectively deletes a channel from the internal cache of channels (Also handles removing the messages in the channel)
+ * @param {string} name the name of the channel
+ */
+export function deleteChannel(name)
+{
+    for (let entry of channels.entries())
+    {
+        if (entry[1].includes(name))
+        {
+            entry[1].splice(entry[1].indexOf(name), 1);
+            break;
+        }
+    }
+    for (let entry of messageCache.entries())
+    {
+        if (entry[1].channel === name)
+        {
+            messageCache.delete(entry[0]);
+        }
+    }
+}
+
+/**
+ * Changes a channel's name (and the internal names of all its messages)
+ * @param {string} name the name of the channel
+ * @param {string} newName the new name of the channel
+ */
+export function editChannel(name, newName)
+{
+    channels.forEach((channels) => {
+        if (channels.includes(name))
+        {
+            channels[channels.indexOf(name)] = newName;
+        }
+    });
+    messageCache.forEach((msg) => {
+        if (msg.channel === name)
+        {
+            msg.channel = newName;
+        }
+    });
+}
+
+/**
+ * Determines whether the current user can create a channel or not
+ * @returns {boolean} true, if the current user can create a new channel
+ */
+export function canCreate()
+{
+    return !channels.get(thisUser) || channels.get(thisUser).length < 5;
 }
 
 /**
@@ -175,7 +244,24 @@ export function addChannel(name)
  */
 export function hasChannel(name)
 {
-    return channels.includes(name);
+    for (let value of channels.values())
+    {
+        if (value.includes(name))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Determines whether the current user owns the channel or not
+ * @param {string} name the name of the channel
+ * @returns {boolea} true, if the current user owns the given channel
+ */
+export function ownsChannel(name)
+{
+    return channels.get(thisUser) && channels.get(thisUser).includes(name);
 }
 
 /**
@@ -187,7 +273,17 @@ export function prepEmotes(str)
     let out = str;
     for (let prop in emoteDict)
     {
-        out = out.replace(prop, emoteDict[prop]);
+        out = out.replace(prop, (str, index) => {
+            if (out.charAt(index - 1) === '\\')
+            {
+                out = out.slice(0, index - 1) + out.slice(index);
+                return str;
+            }
+            else
+            {
+                return emoteDict[prop];
+            }
+        });
     }
     return out;
 }

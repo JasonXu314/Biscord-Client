@@ -17,8 +17,9 @@ export default class Message {
      * @param {string} message text to be sent by the message
      * @param {User} sender the sender of the message
      * @param {string} channel the name of the channel this message belongs to
+     * @param {undefined | string[]} attachments the attachments in the Message
      */
-    constructor(message, sender, channel) {
+    constructor(message, sender, channel, attachments = undefined) {
         /**
          * The message conveyed by this Message
          * @type {string}
@@ -68,6 +69,25 @@ export default class Message {
         this.icon = sender.iconElement;
 
         /**
+         * The attachment files in the Message
+         * @type {string[]}
+         * @readonly
+         */
+        this.attachments = attachments || [];
+        if (!attachments)
+        {
+            for (let file of $('#fileInput').get(0).files)
+            {
+                const fr = new FileReader();
+                fr.onload = () => {
+                    this.attachments.push(fr.result);
+                };
+                fr.readAsDataURL(file);
+            }
+        }
+        $('#fileInput').val('');
+
+        /**
          * The channel this message belongs to
          * @type {string}
          * @readonly
@@ -85,18 +105,17 @@ export default class Message {
             this.msg.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱iscord`;
+                document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱️iscord`;
                 document.addEventListener('visibilitychange', () =>
                 {
                     if (document.visibilityState === 'visible')
                     {
-                        document.title = '🅱iscord';
+                        document.title = '🅱️iscord';
                     }
                 }, { once: true });
             }
         }
         this.element.addEventListener('auxclick', (evt) => {
-            console.log(evt);
             if (evt.target === this.msg)
             {
                 window.addEventListener('contextmenu', (evt) => evt.preventDefault(), {
@@ -109,7 +128,6 @@ export default class Message {
             }
         });
         this.element.addEventListener('click', (evt) => {
-            console.log(evt);
             if (evt.target === this.msg)
             {
                 this.edit({
@@ -118,20 +136,28 @@ export default class Message {
                 });
             }
         });
+        if (this.attachments.length !== 0)
+        {
+            console.log('hi');
+            const fileBlob = new Blob([this.attachments[0]]);
+            this.attachmentElem = $(`<div id = "attachments${this.id}" class = "attachmentDiv"><a href = "${window.URL.createObjectURL(fileBlob)}" download = "attachment">attachment</a></div>`)
+                .appendTo(this.element).get(0);
+        }
         this.prepLinks();
     }
 
     /**
      * Creates a message from given metadata, should only be used when creating dummy messages received from server
      * @param {string} message the text contained in the message
-     * @param {UserShell} sender the user sending the message
+     * @param {User} sender the user sending the message
      * @param {number} id the UUID of the message
      * @param {string[]} edits the edit history of the message
      * @param {string} channel the channel the history belongs to
+     * @param {string[]} attachments the attachments in the message
      */
-    static CreateMessage(message, sender, id, edits, channel)
+    static CreateMessage(message, sender, id, edits, channel, attachments)
     {
-        const newMsg = new Message(message, User.DummyUser(sender.username, sender.id, sender.icon.src), channel);
+        const newMsg = new Message(message, sender, channel, attachments);
         newMsg.id = id;
         newMsg.element.id = id;
         newMsg.edits = edits;
@@ -385,11 +411,11 @@ export default class Message {
             this.msg.classList.add('mention');
             if (document.visibilityState === 'hidden')
             {
-                document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱iscord`;
+                document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱️iscord`;
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'visible')
                     {
-                        document.title = '🅱iscord';
+                        document.title = '🅱️iscord';
                     }
                 }, { once: true });
             }
@@ -397,7 +423,7 @@ export default class Message {
         else if (!this.mentions.includes(`<@${thisUser.id}>`) && this.msg.classList.contains('mention'))
         {
             this.msg.classList.remove('mention');
-            document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 <= 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱iscord`;
+            document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 <= 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱️iscord`;
         }
     }
 
@@ -406,7 +432,7 @@ export default class Message {
      */
     prepLinks()
     {
-        let htmlString = `<td class = "message">${this.author.username}: ${this.messageDisplay.replace(/https?:\/\/[-a-zA-Z0-9_=?#.]+/, (str) => `<a href = "${str}" target = "_blank">${str}</a>`)}</td>`;
+        let htmlString = `<td class = "message">${this.author.username}: ${this.messageDisplay.replace(/https?:\/\/[-a-zA-Z0-9_=?#./]+/, (str) => `<a href = "${str}" target = "_blank">${str}</a>`)}</td>`;
 
         $(this.element).empty();
         this.msg = $(htmlString).get(0);

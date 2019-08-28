@@ -25,7 +25,7 @@ export default class InfoCard
         this.element.classList.add('infoCard');
         const img = new Image(50, 50);
         img.src = this.user.icon.src;
-        img.style = `position: relative; left: 75px; top: 25px;`;
+        img.style = `position: relative; left: 75px; top: 25px; border-radius: 28px; border: 3px solid black;`;
         this.element.appendChild(img);
         const text = document.createElement('p');
         text.style = 'text-align: center; font-weight: bold;'

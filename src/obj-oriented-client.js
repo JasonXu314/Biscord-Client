@@ -1,4 +1,5 @@
-import { windowBehavior, addMessage, fetchMessagesByChannel, fetchUserLatestMessage, hasChannel, addChannel } from './utilities.js';
+import { windowBehavior, addMessage, fetchMessagesByChannel, fetchUserLatestMessage, hasChannel, addChannel, canCreate, ownsChannel, deleteChannel, editChannel } from './utilities.js';
+import FileSaver from 'file-saver';
 import Connection from './connection.js';
 import User from './user.js';
 import Message from './message.js';
@@ -27,16 +28,22 @@ export function setCurrentChannel(channel)
 
 export function wipe()
 {
-    $('#join').off();
-    $('#input').off();
-    $('#inputDiv').off().remove();
-
-    const username = document.getElementById('input').value;
+    const username = document.getElementById('input').value.trim();
     if (username.length > 36)
     {
         alert('Usernames must be 36 characters or less!');
         return;
     }
+    if (username.length === 0)
+    {
+        alert('You must enter a username!');
+        return;
+    }
+
+    $('#join').off();
+    $('#input').off();
+    $('#inputDiv').off().remove();
+
     Connection.register(username).then(user => {
         thisUser = user;
         currentChannel = 'main';
@@ -77,27 +84,44 @@ export function wipe()
             }
         }).get(0);
         const button = $('<button id = "submit">Send</button>').appendTo('#inputRow').get(0);
+        $('<div id = "fileDiv" style = "background-color: crimson; border: 2px solid black; width: 175px;"><input id = "fileInput" type = "file" multiple/></div>')
+            .appendTo('#inputRow')
+            .on('dragenter', function(evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+        
+                this.style.backgroundColor = 'seagreen';
+            }).on('dragover', function(evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+        
+                this.style.backgroundColor = 'seagreen';
+            }).on('dragleave', function(evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+        
+                this.style.backgroundColor = 'crimson';
+            }).one('drop', function(evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+        
+                this.style.backgroundColor = 'seagreen';
+                document.getElementById('fileInput').files = evt.originalEvent.dataTransfer.files;
+                document.getElementById('fileInput').dispatchEvent(new Event('change'));
+            }).children()
+            .on('change', () => {
+                const file = document.getElementById('fileInput').files[0];
+                if (!['.txt', '.png', '.jpg', '.pdf', '.csv'].includes(file.name.slice(file.name.lastIndexOf('.'))))
+                {
+                    alert('Warning: Sending a file that is not explicitly supported may have unforseen consequences; 🅱️iscord currently only directly supports .txt, .png, .jpb, .pdf, and .csv files');
+                }
+            });
         input.focus();
         $('<table id = "userList"></table>').appendTo(document.body);
         $('<table id = "channelList"></table>').appendTo(document.body);
-        $('<tr><td class = "channelEntry selected">main</td></tr>').appendTo($('#channelList')).children().on('click', function(evt) {
-            if (evt.target === this)
-            {
-                fetchMessagesByChannel(currentChannel).forEach((msg) => {
-                    $(msg.element).remove();
-                });
-                $('.selected').get(0).classList.remove('selected');
-                currentChannel = this.textContent;
-                this.classList.add('selected');
-                fetchMessagesByChannel(currentChannel).forEach((msg) => {
-                    $(msg.render()).insertBefore($('#inputRow'));
-                });
-                document.getElementById('input').focus();
-            }
-        });
         $('<tr id = "addChannelTR"><td id = "addChannel">+</td></tr>').on('click', () => {
             const newName = prompt('What would you like to name the new channel?', 'New Channel');
-            if (newName === null)
+            if (newName === null || newName.trim().length === 0)
             {
                 return;
             }
@@ -106,21 +130,154 @@ export function wipe()
                 alert('There already exists a channel with that name!');
                 return;
             }
-            $(`<tr><td class = "channelEntry">${newName}</td></tr>`).insertBefore($('#addChannelTR')).children().on('click', function(evt) {
-                if (evt.target === this)
-                {
-                    fetchMessagesByChannel(currentChannel).forEach((msg) => {
-                        $(msg.element).remove();
-                    });
-                    $('.selected').get(0).classList.remove('selected');
-                    currentChannel = this.textContent;
-                    this.classList.add('selected');
-                    fetchMessagesByChannel(currentChannel).forEach((msg) => {
-                        $(msg.render()).insertBefore($('#inputRow'));
-                    });
-                    document.getElementById('input').focus();
-                }
-            });
+            if (!canCreate())
+            {
+                alert('You have reached the 5 channel limit!');
+                return;
+            }
+            $(`<tr id = "channel${newName.replace(' ', '_')}"><td class = "channelEntry">${newName}</td></tr>`).insertBefore($('#addChannelTR'))
+                .children().on('mouseenter', function(evt) {
+                    let fadeInID;
+                    let fadeOutID;
+                    if (evt.target === this && !$(this).siblings().hasClass('optionsDiv'))
+                    {
+                        let onMenu = false;
+                        const optionsDiv = $('<div class = "optionsDiv">⋮</div>')
+                            .css('height', '18px')
+                            .css('width', '15px')
+                            .css('top', `${$(this).parent().position().top + ($(this).parent().height() - $(this).height())/2 - 6}px`)
+                            .css('left', `${$(this).parent().position().left + $(this).parent().width() - 37}px`)
+                            .css('opacity', 0)
+                            .on('mouseenter', function(evt) {
+                                if (evt.target === this)
+                                {
+                                    onMenu = true;
+                                }
+                            })
+                            .on('mouseout', function(evt) {
+                                if (evt.target === this)
+                                {
+                                    onMenu = false;
+                                    if ($(this).children().hasClass('optionsTable'))
+                                    {
+                                        if (!($(this).siblings().is($(evt.relatedTarget)) || $(this).children().is(evt.relatedTarget)))
+                                        {
+                                            $(this).siblings().mouseout();
+                                        }
+                                    }
+                                    else if (!$(this).siblings().is($(evt.relatedTarget)))
+                                    {
+                                        $(this).siblings().mouseout();
+                                    }
+                                }
+                            })
+                            .on('click', function expand(evt) {
+                                if (evt.target === this)
+                                {
+                                    $(this)
+                                        .css('height', '')
+                                        .css('width', '')
+                                        .append($('<table class = "optionsTable"></table>')
+                                            .append($('<tr><td class = "channelOption">Delete</td></tr>').children()
+                                                .on('click', () => {
+                                                    const thisChannel = $(this).siblings().text();
+                                                    if (!ownsChannel(thisChannel))
+                                                    {
+                                                        alert("Please do not try to delete other peoples' channels!");
+                                                        return;
+                                                    }
+                                                    deleteChannel(thisChannel);
+                                                    Connection.request('deleteChannel', {
+                                                        name: thisChannel
+                                                    });
+                                                    $(this).parent().off().remove();
+                                                }).parent())
+                                            .append($('<tr><td class = "channelOption">Edit</td></tr>').children()
+                                                .on('click', () => {
+                                                    const thisChannel = $(this).siblings().text();
+                                                    if (!ownsChannel(thisChannel))
+                                                    {
+                                                        alert("Please do not try to delete other peoples' channels!");
+                                                        return;
+                                                    }
+                                                    const newName = prompt('What would you like to name the new channel?', $(this).siblings().text());
+                                                    if (newName === null)
+                                                    {
+                                                        return;
+                                                    }
+                                                    if (newName.trim().length === 0)
+                                                    {
+                                                        alert('Please enter a name for the channel!');
+                                                        return;
+                                                    }
+                                                    editChannel(thisChannel, newName);
+                                                    $(this).siblings().text(newName);
+                                                    Connection.request('editChannel', {
+                                                        name: thisChannel,
+                                                        newName: newName
+                                                    });
+                                                    $(this).siblings().mouseout();
+                                                }).parent()))
+                                            .off('click', expand);
+                                }
+                            })
+                            .appendTo($(this).parent());
+                        fadeInID = setInterval(() => {
+                            optionsDiv.css('opacity', `${parseFloat(optionsDiv.css('opacity')) + 0.01}`);
+                            if (parseFloat(optionsDiv.css('opacity')) === 1)
+                            {
+                                clearInterval(fadeInID);
+                            }
+                        }, 5);
+                        $(this).on('mouseout', function mouseOutBehavior(evt) {
+                            if (evt.target === this)
+                            {
+                                setTimeout(() => {
+                                    if (!onMenu)
+                                    {
+                                        fadeOutID = setInterval(() => {
+                                            clearInterval(fadeInID);
+                                            optionsDiv.css('opacity', `${parseFloat(optionsDiv.css('opacity')) - 0.01}`);
+                                            if (parseFloat(optionsDiv.css('opacity')) === 0)
+                                            {
+                                                clearInterval(fadeOutID);
+                                                optionsDiv.remove();
+                                                $(this).off('mouseout', mouseOutBehavior);
+                                            }
+                                        }, 5);
+                                    }
+                                }, 5);
+                            }
+                        });
+                    }
+                    else
+                    {
+                        clearInterval(fadeOutID);
+                        const optionsDiv = $(this).children().has('.optionsDiv');
+                        fadeInID = setInterval(() => {
+                            optionsDiv.css('opacity', `${parseFloat(optionsDiv.css('opacity')) + 0.01}`);
+                            if (parseFloat(optionsDiv.css('opacity')) === 1)
+                            {
+                                clearInterval(fadeInID);
+                            }
+                        }, 5);
+                    }
+                })
+                .on('click', function(evt) {
+                    if (evt.target === this)
+                    {
+                        fetchMessagesByChannel(currentChannel).forEach((msg) => {
+                            $(msg.element).remove();
+                        });
+                        $('.selected').removeClass('selected');
+                        setCurrentChannel(this.textContent);
+                        this.classList.add('selected');
+                        fetchMessagesByChannel(currentChannel).forEach((msg) => {
+                            $(msg.render()).insertBefore($('#inputRow'));
+                        });
+                        document.getElementById('input').focus();
+                    }
+                });
             addChannel(newName);
             Connection.request('createChannel', { name: newName });
             document.getElementById('input').focus();

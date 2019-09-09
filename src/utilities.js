@@ -39,7 +39,9 @@ const emoteDict = {
     ':D': '😃',
     ':smile_eyes:': '😄',
     '^_^': '😄',
-    ':asian:': '😐'
+    ':asian:': '😐',
+    ':(': '🙁',
+    'frown': '🙁'
 }
 
 /**
@@ -64,7 +66,7 @@ export function addUser(user)
  */
 export function removeUser(id)
 {
-    pastUsers.set(typeof id === 'number' ? id : parseInt(id), pastUsers.get(typeof id === 'number' ? id : parseInt(id)));
+    pastUsers.set(typeof id === 'number' ? id : parseInt(id), userMap.get(typeof id === 'number' ? id : parseInt(id)));
     userMap.delete(typeof id === 'number' ? id : parseInt(id));
     cardMap.delete(typeof id === 'number' ? id : parseInt(id));
 }
@@ -199,13 +201,12 @@ export function deleteChannel(name)
             break;
         }
     }
-    for (let entry of messageCache.entries())
-    {
-        if (entry[1].channel === name)
+    messageCache.forEach((msg, id) => {
+        if (msg.channel === name)
         {
-            messageCache.delete(entry[0]);
+            messageCache.delete(id);
         }
-    }
+    });
 }
 
 /**
@@ -286,6 +287,21 @@ export function prepEmotes(str)
         });
     }
     return out;
+}
+
+/**
+ * Gets the bytes of the string (Returned as a Uint8Array), for use in binary encoding of files
+ * @param {string} str the string to be turned into bytes
+ * @returns {Uint8Array} the bytes of the string
+ */
+export function getStringBytes(str)
+{
+    const bytes = new Uint8Array(str.length);
+    for (var i = 0; i < str.length; i++)
+    {
+        bytes[i] = str.charCodeAt(i);
+    }
+    return bytes;
 }
 
 export const windowBehavior = (evt) => {

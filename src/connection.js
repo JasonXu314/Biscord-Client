@@ -39,6 +39,12 @@ export default class Connection
             }));
             connection.close();
         }
+        try
+        {
+            location.reload();
+            process.exit();
+        }
+        catch (err) {}
     }
 
     /**
@@ -52,6 +58,10 @@ export default class Connection
         let user = null;
         return new Promise((resolve, reject) => {
             connection = new WebSocket('ws://10.10.66.51:3000');
+            connection.onerror = (evt) => {
+                alert(`Error occured during connection establishment; refreshing now (Error: ${evt})`);
+                location.reload();
+            }
             connection.addEventListener('open', () => {
                 connection.send(JSON.stringify({
                     type: 'registration',
@@ -61,10 +71,8 @@ export default class Connection
                     if (JSON.parse(msg.data).type === 'rejection')
                     {
                         $(document.body.children).remove();
-                        let h3 = document.createElement('h3');
-                        h3.textContent = 'Please enter a username';
-                        h3.id = 'text';
-                        document.body.appendChild(h3);
+                        $('<h3 id = "text" style = "color: rgb(115, 138, 219)">Please enter a username</h3>')
+                            .appendTo(document.body);
                         let h4 = document.createElement('h4');
                         h4.textContent = JSON.parse(msg.data).reason;
                         h4.classList.add('errorMsg');
@@ -140,19 +148,18 @@ export default class Connection
                                 case ('message'):
                                     if (JSON.parse(msg.data).message.author.id !== thisUser.id)
                                     {
-                                        console.log('message');
-                                        let message = Message.CreateMessage(JSON.parse(msg.data).message.messageRaw, retrieveUserByID(JSON.parse(msg.data).message.author.id), JSON.parse(msg.data).message.id, JSON.parse(msg.data).message.edits, JSON.parse(msg.data).message.channel, JSON.parse(msg.data).message.attachments);
-                                        if (JSON.parse(msg.data).message.channel === currentChannel)
+                                        const dataMsg = JSON.parse(msg.data).message;
+                                        let message = Message.CreateMessage(dataMsg.messageRaw, retrieveUserByID(dataMsg.author.id), dataMsg.id, dataMsg.edits, dataMsg.channel, dataMsg.attachments);
+                                        addMessage(message);
+                                        if (message.channel === currentChannel)
                                         {
                                             $(message.render()).insertBefore($('#inputRow'));
                                             window.scrollBy({ top: window.outerHeight });
                                             $('#messageBoard').scrollTop($('#messageBoard').height() * fetchMessagesByChannel(currentChannel).length / 14 + 600);
                                         }
-                                        addMessage(message);
                                     }
                                     break;
                                 case ('delete'):
-                                    console.log('delete');
                                     if (!thisUser.check(JSON.parse(msg.data).creds))
                                     {
                                         const delMessage = retrieveMessage(JSON.parse(msg.data).id);
@@ -165,14 +172,12 @@ export default class Connection
                                     }
                                     break;
                                 case ('edit'):
-                                    console.log('edit');
                                     if (!thisUser.check(JSON.parse(msg.data).creds))
                                     {
                                         retrieveMessage(JSON.parse(msg.data).id).edit(JSON.parse(msg.data).creds, JSON.parse(msg.data).newMsgRaw);
                                     }
                                     break;
                                 case ('join'):
-                                    console.log('join');
                                     addUser(User.DummyUser(JSON.parse(msg.data).user.username, JSON.parse(msg.data).user.id, JSON.parse(msg.data).user.icon.src));
                                     if (JSON.parse(msg.data).user.id === 0 || JSON.parse(msg.data).user.id === 1) return;
                                     const tr = document.createElement('tr');
@@ -233,9 +238,8 @@ export default class Connection
                                     document.getElementById('userList').appendChild(tr);
                                     break;
                                 case ('disconnect'):
-                                    console.log('disconnect');
-                                    removeUser(JSON.parse(msg.data).user.id);
-                                    document.getElementById('userList').removeChild(document.getElementById(JSON.parse(msg.data).user.id));
+                                    removeUser(JSON.parse(msg.data).user.id); 
+                                    $('#userList').children(`#${JSON.parse(msg.data).user.id}`).remove();
                                     break;
                                 case ('createChannel'):
                                     if (hasChannel(JSON.parse(msg.data).name))
@@ -293,6 +297,10 @@ export default class Connection
                                                                                 alert("Please do not try to delete other peoples' channels!");
                                                                                 return;
                                                                             }
+                                                                            if (thisChannel === currentChannel)
+                                                                            {
+                                                                                $('#channelmain').children().click();
+                                                                            }
                                                                             deleteChannel(thisChannel);
                                                                             Connection.request('deleteChannel', {
                                                                                 name: thisChannel
@@ -304,17 +312,29 @@ export default class Connection
                                                                             const thisChannel = $(this).siblings().text();
                                                                             if (!ownsChannel(thisChannel))
                                                                             {
-                                                                                alert("Please do not try to delete other peoples' channels!");
+                                                                                alert("Please do not try to edit other peoples' channels!");
                                                                                 return;
                                                                             }
-                                                                            const newName = prompt('What would you like to name the new channel?', $(this).siblings().text());
+                                                                            const newName = prompt('What would you like to rename the channel to?', $(this).siblings().text());
                                                                             if (newName === null)
                                                                             {
                                                                                 return;
                                                                             }
                                                                             if (newName.trim().length === 0)
                                                                             {
-                                                                                alert('Please enter a name for the channel!');
+                                                                                if (thisChannel === currentChannel)
+                                                                                {
+                                                                                    $('#channelmain').children().click();
+                                                                                }
+                                                                                deleteChannel(thisChannel);
+                                                                                Connection.request('deleteChannel', {
+                                                                                    name: thisChannel
+                                                                                });
+                                                                                $(this).parent().off().remove();
+                                                                            }
+                                                                            if (hasChannel(newName))
+                                                                            {
+                                                                                alert('Channel already exists with that name!');
                                                                                 return;
                                                                             }
                                                                             editChannel(thisChannel, newName);
@@ -392,17 +412,12 @@ export default class Connection
                                     }
                                     break;
                                 case ('deleteChannel'):
-                                    console.log('channelDelete');
                                     deleteChannel(JSON.parse(msg.data).name);
                                     $(`#channel${JSON.parse(msg.data).name.replace(' ', '_')}`).off().remove();
                                     break;
                                 case ('editChannel'):
-                                    console.log('channelEdit');
                                     editChannel(JSON.parse(msg.data).name, JSON.parse(msg.data).newName);
-                                    $(`#channel${JSON.parse(msg.data).name.replace(' ', '_')}`).children('td').text(JSON.parse(msg.data).newName);
-                                    break;
-                                case ('ping'):
-                                    connection.send(JSON.stringify({ type: 'pong' }));
+                                    $(`#channel${JSON.parse(msg.data).name.replace(' ', '_')}`).attr('id', `#channel${JSON.parse(msg.data).newName.replace(' ', '_')}`).children('td').text(JSON.parse(msg.data).newName);
                                     break;
                             }
                         });
@@ -488,10 +503,12 @@ export default class Connection
      */
     static message(msg)
     {
-        connection.send(JSON.stringify({
-            type: 'message',
-            message: msg
-        }));
+        setTimeout(() => {
+            connection.send(JSON.stringify({
+                type: 'message',
+                message: msg
+            }));
+        }, 250);
     }
 
     /**

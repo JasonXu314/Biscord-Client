@@ -1,5 +1,4 @@
 import { windowBehavior, addMessage, fetchMessagesByChannel, fetchUserLatestMessage, hasChannel, addChannel, canCreate, ownsChannel, deleteChannel, editChannel } from './utilities.js';
-import FileSaver from 'file-saver';
 import Connection from './connection.js';
 import User from './user.js';
 import Message from './message.js';
@@ -40,11 +39,13 @@ export function wipe()
         return;
     }
 
-    $('#join').off();
-    $('#input').off();
+    $('#join').off().remove();
+    $('#input').off().remove();
     $('#inputDiv').off().remove();
+    $('<div class = "loader"></div>').appendTo(document.body);
 
     Connection.register(username).then(user => {
+        $('.loader').remove();
         thisUser = user;
         currentChannel = 'main';
 
@@ -101,7 +102,7 @@ export function wipe()
                 evt.stopPropagation();
         
                 this.style.backgroundColor = 'crimson';
-            }).one('drop', function(evt) {
+            }).on('drop', function(evt) {
                 evt.preventDefault();
                 evt.stopPropagation();
         
@@ -109,12 +110,16 @@ export function wipe()
                 document.getElementById('fileInput').files = evt.originalEvent.dataTransfer.files;
                 document.getElementById('fileInput').dispatchEvent(new Event('change'));
             }).children()
-            .on('change', () => {
-                const file = document.getElementById('fileInput').files[0];
-                if (!['.txt', '.png', '.jpg', '.pdf', '.csv'].includes(file.name.slice(file.name.lastIndexOf('.'))))
+            .on('change', function() {
+                for (let file of document.getElementById('fileInput').files)
                 {
-                    alert('Warning: Sending a file that is not explicitly supported may have unforseen consequences; 🅱️iscord currently only directly supports .txt, .png, .jpb, .pdf, and .csv files');
+                    if (!['.txt', '.png', '.jpg', '.pdf', '.csv', '.zip', '.jar'].includes(file.name.slice(file.name.lastIndexOf('.'))))
+                    {
+                        alert('Warning: Sending a file that is not explicitly supported may have unforseen consequences; 🅱️iscord currently only directly supports .txt, .png, .jpg, .pdf, .zip, .jar, and .csv files');
+                        break;
+                    }
                 }
+                $(this).parent().css('backgroundColor', 'crimson');
             });
         input.focus();
         $('<table id = "userList"></table>').appendTo(document.body);
@@ -186,6 +191,10 @@ export function wipe()
                                                         alert("Please do not try to delete other peoples' channels!");
                                                         return;
                                                     }
+                                                    if (thisChannel === currentChannel)
+                                                    {
+                                                        $('#channelmain').children().click();
+                                                    }
                                                     deleteChannel(thisChannel);
                                                     Connection.request('deleteChannel', {
                                                         name: thisChannel
@@ -197,17 +206,29 @@ export function wipe()
                                                     const thisChannel = $(this).siblings().text();
                                                     if (!ownsChannel(thisChannel))
                                                     {
-                                                        alert("Please do not try to delete other peoples' channels!");
+                                                        alert("Please do not try to edit other peoples' channels!");
                                                         return;
                                                     }
-                                                    const newName = prompt('What would you like to name the new channel?', $(this).siblings().text());
+                                                    const newName = prompt('What would you like to rename the channel to?', $(this).siblings().text());
                                                     if (newName === null)
                                                     {
                                                         return;
                                                     }
                                                     if (newName.trim().length === 0)
                                                     {
-                                                        alert('Please enter a name for the channel!');
+                                                        if (thisChannel === currentChannel)
+                                                        {
+                                                            $('#channelmain').children().click();
+                                                        }
+                                                        deleteChannel(thisChannel);
+                                                        Connection.request('deleteChannel', {
+                                                            name: thisChannel
+                                                        });
+                                                        $(this).parent().off().remove();
+                                                    }
+                                                    if (hasChannel(newName))
+                                                    {
+                                                        alert('Channel already exists with that name!');
                                                         return;
                                                     }
                                                     editChannel(thisChannel, newName);
@@ -348,7 +369,78 @@ window.addEventListener('load', () => {
         }
         const fr = new FileReader();
         fr.addEventListener('load', () => {
-            thisIcon.src = fr.result;
+            try
+            {
+                thisIcon.src = fr.result;
+            }
+            catch (error)
+            {
+                console.error(error);
+                alert('Failed to load image URL; file may be corrupted or unreachable!');
+                $(document.body.children).remove();
+                let h3 = document.createElement('h3');
+                h3.textContent = 'Please enter a username';
+                h3.id = 'text';
+                document.body.appendChild(h3);
+                let h4 = document.createElement('h4');
+                h4.textContent = JSON.parse(msg.data).reason;
+                h4.classList.add('errorMsg');
+                h4.id = 'h4';
+                document.body.appendChild(h4);
+                let input = document.createElement('input');
+                input.id = 'input';
+                input.name = 'username';
+                input.type = 'text';
+                document.body.appendChild(input);
+                let button = document.createElement('button');
+                button.id = 'join';
+                button.textContent = 'Join';
+                button.addEventListener('click', () => wipe());
+                document.body.appendChild(button);
+                input.focus();
+                $('<div id = "inputDiv" style = "background-color: crimson; border: 2px solid black; width: 250px; height: 50px"><input type = "file" name = "icon" id = "fileInput" style = "position: relative; top: 15px; left: 25px"/></div>')
+                .appendTo(document.body)
+                .on('dragenter', (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+            
+                    editDiv.style.backgroundColor = 'seagreen';
+                }).on('dragover', (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+            
+                    editDiv.style.backgroundColor = 'seagreen';
+                }).on('dragleave', (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+            
+                    editDiv.style.backgroundColor = 'crimson';
+                }).one('drop', (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+            
+                    editDiv.style.backgroundColor = 'seagreen';
+                    document.getElementById('fileInput').files = evt.originalEvent.dataTransfer.files;
+                    document.getElementById('fileInput').dispatchEvent(new Event('change'));
+                });
+            
+                $('#fileInput').on('change', () => {
+                    if (!(['png', 'jpg'].includes(document.getElementById('fileInput').files[0].name.split('.')[document.getElementById('fileInput').files[0].name.split('.').length - 1])))
+                    {
+                        alert('Only .png and.jpg files are supported for icons!');
+                        return;
+                    }
+                    const fr = new FileReader();
+                    fr.addEventListener('load', () => {
+                        thisIcon.src = fr.result;
+                    });
+                    fr.readAsDataURL(document.getElementById('fileInput').files[0]);
+                });
+
+                document.addEventListener('keydown', windowBehavior);
+                
+                return;
+            }
         });
         fr.readAsDataURL(document.getElementById('fileInput').files[0]);
     });

@@ -7,7 +7,8 @@ import {
     innerBehavior,
     retrieveUserByID,
     retrieveUserByName,
-    prepEmotes
+    prepEmotes,
+    getStringBytes
 } from './utilities.js';
 import $ from 'jquery';
 
@@ -17,7 +18,7 @@ export default class Message {
      * @param {string} message text to be sent by the message
      * @param {User} sender the sender of the message
      * @param {string} channel the name of the channel this message belongs to
-     * @param {undefined | string[]} attachments the attachments in the Message
+     * @param {undefined | any[]} attachments the attachments in the Message
      */
     constructor(message, sender, channel, attachments = undefined) {
         /**
@@ -57,7 +58,6 @@ export default class Message {
          * A list of messages this message conveyed in the past
          * Arranged in order of first edited to last edited
          * @type {Array<string>}
-         * @readonly
          */
         this.edits = [];
 
@@ -70,23 +70,10 @@ export default class Message {
 
         /**
          * The attachment files in the Message
-         * @type {string[]}
+         * @type {any[]}
          * @readonly
          */
         this.attachments = attachments || [];
-        if (!attachments)
-        {
-            console.log('hi');
-            for (let file of $('#fileInput').get(0).files)
-            {
-                const fr = new FileReader();
-                fr.onload = () => {
-                    this.attachments.push(fr.result);
-                };
-                fr.readAsDataURL(file);
-            }
-        }
-        $('#fileInput').val('');
 
         /**
          * The channel this message belongs to
@@ -95,15 +82,103 @@ export default class Message {
          */
         this.channel = channel;
 
-        this.element = document.createElement('tr');
+        this.element = $(`<tr id = ${this.id} class = "messageElement"></tr>`).get(0);
+
+        if (!attachments)
+        {
+            /** @type {FileList} */
+            const files = $('#fileInput').get(0).files;
+            let index = 0;
+            for (let file of files)
+            {
+                let extension = file.name.split('.')[1];
+                let name = file.name.split('.')[0];
+
+                if (!this.attachmentElem)
+                {
+                    this.attachmentElem = $(`<td id = "attachments${this.id}" class = "attachmentTD"><a href = "${window.URL.createObjectURL(file)}" download = "${name}">${name}.${extension}</a></td>`)
+                        .appendTo(this.element).get(0);
+                }
+                else
+                {
+                    $(this.attachmentElem).append($(`<br><a href = "${window.URL.createObjectURL(file)}" download = "${name}">${name}.${extension}</a>`));
+                }
+                if (extension === 'png' || extension === 'jpg')
+                {
+                    const fileReader = new FileReader();
+                    fileReader.onload = () => {
+                        const img = new Image(100, 100);
+                        img.src = fileReader.result;
+                        img.onload = () => {
+                            $(img).appendTo(this.element).wrap($('<div></div>'));
+                        };
+                    };
+                    fileReader.readAsDataURL(file);
+                }
+
+                index++;
+                if (index === files.length)
+                {
+                    $('#fileInput').val('');
+                }
+
+                const fr = new FileReader();
+                fr.onload = () => {
+                    this.attachments.push({
+                        name: name,
+                        extension: extension,
+                        rawData: new Uint8Array(fr.result)
+                    });
+                }
+                fr.readAsArrayBuffer(file);
+            }
+        }
+        else
+        {
+            const extObj = {
+                "zip": "application/zip",
+                "jar": "application/zip",
+                "pdf": "application/pdf",
+                "png": "image/png",
+                "jpg": "image/jpg",
+                "csv": "text/csv"
+            };
+            for (let data of attachments)
+            {
+                let name = data.name;
+                let extension = data.extension;
+                const file = new File([Uint8Array.from(Object.values(data.rawData)).buffer], `${name}.${extension}`, { type: extObj[extension] });
+                if (!this.attachmentElem)
+                {
+                    this.attachmentElem = $(`<td id = "attachments${this.id}" class = "attachmentTD"><a href = "${window.URL.createObjectURL(file)}" download = "${name}">${name}.${extension}</a></td>`)
+                        .appendTo(this.element).get(0);
+                }
+                else
+                {
+                    $(this.attachmentElem).append($(`<br><a href = "${window.URL.createObjectURL(file)}" download = "${name}" class = "downloadLink">${name}.${extension}</a>`));
+                }
+                if (extension === 'png' || extension === 'jpg')
+                {
+                    const fr = new FileReader();
+                    fr.onload = () => {
+                        const img = new Image(100, 100);
+                        img.src = fr.result;
+                        img.onload = () => {
+                            $(img).appendTo(this.element).wrap($('<div></div>'));
+                        };
+                    };
+                    fr.readAsDataURL(file);
+                }
+            }
+            this.attachments = attachments;
+        }
+
         this.msg = document.createElement('td');
-        this.element.appendChild(this.msg);
         this.msg.textContent = `${this.author.username}: ${this.messageDisplay}`;
-        this.element.id = this.id;
-        this.msg.classList.add('message');
+        $(this.msg).addClass('message');
         if (this.mentions.includes(`<@${thisUser.id}>`))
         {
-            this.msg.classList.add('mention');
+            $(this.msg).addClass('mention');
             if (document.visibilityState === 'hidden')
             {
                 document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱️iscord`;
@@ -116,6 +191,7 @@ export default class Message {
                 }, { once: true });
             }
         }
+        this.element.appendChild(this.msg);
         this.element.addEventListener('auxclick', (evt) => {
             if (evt.target === this.msg)
             {
@@ -137,14 +213,6 @@ export default class Message {
                 });
             }
         });
-        console.log(this.attachments);
-        if (this.attachments.length !== 0)
-        {
-            console.log('hi');
-            const fileBlob = new Blob([this.attachments[0]]);
-            this.attachmentElem = $(`<div id = "attachments${this.id}" class = "attachmentDiv"><a href = "${window.URL.createObjectURL(fileBlob)}" download = "attachment">attachment</a></div>`)
-                .appendTo(this.element).get(0);
-        }
         this.prepLinks();
     }
 
@@ -164,10 +232,11 @@ export default class Message {
         newMsg.element.id = id;
         newMsg.edits = edits;
 
-        if (edits.length !== 0) {
+        if (newMsg.edits.length !== 0) {
             const sub = document.createElement('sub');
-            sub.textContent = `edited (${edits.length})`;
+            sub.textContent = `edited (${newMsg.edits.length})`;
             sub.id = `${newMsg.id}sub`;
+            sub.classList.add('editSub');
             sub.addEventListener('mouseover', (evt) => {
                 let display = document.createElement('div');
                 display.id = 'editDiv';
@@ -175,7 +244,7 @@ export default class Message {
                 display.appendChild(editBoard);
                 display.setAttribute('style', `top:${evt.pageY - 45}px;left:${evt.pageX - 45}px;position:absolute;`);
                 editBoard.setAttribute('class', 'messageBoard');
-                edits.forEach((editMsg) => {
+                newMsg.edits.forEach((editMsg) => {
                     let editTr = document.createElement('tr');
                     let editTd = document.createElement('td');
                     editTd.textContent = editMsg;
@@ -191,6 +260,7 @@ export default class Message {
                 document.body.removeChild(document.getElementById('editDiv'));
                 document.removeEventListener('mousemove', innerBehavior)
             });
+            newMsg.element.appendChild(sub);
         }
 
         return newMsg;
@@ -410,7 +480,7 @@ export default class Message {
         this.mentions = this.messageRaw.match(/<@(?:\d){13}>/g) === null ? [] : new Array(...this.messageRaw.match(/<@(?:\d){13}>/g));
         if (this.mentions.includes(`<@${thisUser.id}>`) && !this.msg.classList.contains('mention'))
         {
-            this.msg.classList.add('mention');
+            $(this.msg).addClass('mention');
             if (document.visibilityState === 'hidden')
             {
                 document.title = `${document.title.match(/\d+/) === null ? 1 : parseInt(document.title.match(/\d+/)[0]) + 1}🔴 🅱️iscord`;
@@ -424,7 +494,7 @@ export default class Message {
         }
         else if (!this.mentions.includes(`<@${thisUser.id}>`) && this.msg.classList.contains('mention'))
         {
-            this.msg.classList.remove('mention');
+            $(this.msg).removeClass('mention');
             document.title = `${document.title.match(/\d+/) === null ? '' : parseInt(document.title.match(/\d+/)[0]) - 1 <= 0 ? '' : `${parseInt(document.title.match(/\d+/)[0]) - 1}🔴 `}🅱️iscord`;
         }
     }
@@ -434,10 +504,10 @@ export default class Message {
      */
     prepLinks()
     {
-        let htmlString = `<td class = "message">${this.author.username}: ${this.messageDisplay.replace(/https?:\/\/[-a-zA-Z0-9_=?#./]+/, (str) => `<a href = "${str}" target = "_blank">${str}</a>`)}</td>`;
+        let htmlString = `<td class = "${this.mentions.includes(`<@${thisUser.id}>`) ? 'message mention' : 'message'}">${this.author.username}: ${this.messageDisplay.replace(/https?:\/\/[-a-zA-Z0-9_=?#./]+/, (str) => `<a href = "${str}" target = "_blank">${str}</a>`)}</td>`;
 
-        $(this.element).empty();
+        this.element.removeChild(this.msg);
         this.msg = $(htmlString).get(0);
-        $(this.element).append(this.msg);
+        $(this.element).prepend(this.msg);
     }
 }
